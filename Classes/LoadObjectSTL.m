@@ -5,6 +5,7 @@ classdef LoadObjectSTL < handle
     properties (Abstract) % An inheriing class must implement and assign these properties
         %> The first few letters or the name of ply files in the same directory
         fileName;
+        identifier;
         scaleX;
         scaleY;
         scaleZ;
@@ -47,6 +48,7 @@ classdef LoadObjectSTL < handle
             catch
                 self.name = ['LoadObjectSTL',datestr(now,'yyyymmddTHHMMSSFFF')];
             end
+
             if self.fileName ~= ""
                 self.plotFile();
                 self.getObjectSize();
@@ -54,12 +56,12 @@ classdef LoadObjectSTL < handle
         end
 
         function delete(self)
-             handles = findobj('Tag',self.fileName);
-            
+            handles = findobj('Tag',self.identifier);
+
             % Check if any handles were found
             if ~isempty(handles)
-                disp(['Found ', num2str(length(handles)), ' object(s) with fileName: ', self.fileName]);
-                
+                disp(['Found ', num2str(length(handles)), ' object(s) with identifier: ', self.identifier]);
+
                 % Loop through the found handles and delete them
                 if length(handles) > 1
                     for i = 2:length(handles)
@@ -70,12 +72,31 @@ classdef LoadObjectSTL < handle
                     end
                 end
             else
-                disp('No existing objects found with the same fileName.');
+                disp('No existing objects found with the same identifier.');
+            end
+        end
+
+        function deleteAll(self)
+            handles = findobj('Tag',self.identifier);
+
+            % Check if any handles were found
+            if ~isempty(handles)
+                disp(['Found ', num2str(length(handles)), ' object(s) with identifier: ', self.identifier]);
+
+                for i = 1:length(handles)
+                    if isvalid(handles(i)) % Ensure the handle is valid
+                        delete(handles(i)); % Safely attempt to delete the object
+                        disp("Object deleted.");
+                    end
+                end
+            else
+                disp('No existing objects found with the same identifier.');
             end
         end
 
         function plotFile(self)
-            filepath = "@CADFiles\" + self.fileName + ".stl";
+            %filepath = "@CADFiles\" + self.fileName + ".stl";
+            filepath = self.fileName + ".stl";
             object = stlread(filepath); %import ply file
             faces = object.ConnectivityList;
             vertices = object.Points;
@@ -97,11 +118,17 @@ classdef LoadObjectSTL < handle
             transparency = 1;
             if self.fileName == "enclosure"
                 transparency = 0.1;
+            elseif self.fileName == "door"
+                transparency = 0.7;
             end
             hold on;
             axis(self.workspace);
+            disp(self.identifier);
+            xlabel('X Axis');
+            ylabel('Y Axis');
+            zlabel('Z Axis');
 
-            trisurf(faces, newCoordinates(:, 1), newCoordinates(:, 2), newCoordinates(:,3),'FaceColor', self.faceColour, "EdgeColor",  self.edgeColour,  'FaceAlpha', transparency, "Tag",self.fileName);
+            trisurf(faces, newCoordinates(:, 1), newCoordinates(:, 2), newCoordinates(:,3),'FaceColor', self.faceColour, "EdgeColor",  self.edgeColour,  'FaceAlpha', transparency, "Tag", self.identifier);
         end
 
         function getObjectSize(self)

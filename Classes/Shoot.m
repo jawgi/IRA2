@@ -3,10 +3,11 @@ classdef Shoot < LoadObjectSTL
         fileName = "shoot";
         scaleX = 1.0;
         scaleY = 1.0;
-        scaleZ = 1.0;
-        transformation = SE3(0,0.15,0);
-        faceColour = [0.6,0.3,0];
-        edgeColour = [0.65,0.35,0.05];
+        scaleZ = 0.7;
+        transformation = SE3(0,-1.45,0.4);
+        faceColour = [0,0,0];
+        edgeColour = [0.5,0.5,0.5];
+        identifier = "shoot";
     end
     
     methods
