@@ -12,6 +12,7 @@ classdef LoadObjectSTL < handle
         transformation;
         faceColour;
         edgeColour;
+        pointCloud;
     end
 
     properties
@@ -100,6 +101,7 @@ classdef LoadObjectSTL < handle
             object = stlread(filepath); %import ply file
             faces = object.ConnectivityList;
             vertices = object.Points;
+            self.pointCloud = vertices;
             scaledX = vertices(:,1) * self.scaleX;
             scaledY = vertices(:,2) * self.scaleY;
             scaledZ = vertices(:,3) * self.scaleZ;

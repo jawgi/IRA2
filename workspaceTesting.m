@@ -26,3 +26,6 @@ eStopCollection = EStopObject("collection");
 
 sensor = DoorSensor();
 camera = CameraObject();
+
+%% Fruit plotting
+fruit = Fruit("manual",9);
