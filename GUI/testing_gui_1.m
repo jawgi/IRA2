@@ -22,7 +22,7 @@ function varargout = testing_gui_1(varargin)
 
 % Edit the above text to modify the response to help testing_gui_1
 
-% Last Modified by GUIDE v2.5 16-Oct-2024 18:17:45
+% Last Modified by GUIDE v2.5 23-Oct-2024 09:25:11
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1055,9 +1055,9 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --- Executes on button press in preview_button.
-function preview_button_Callback(hObject, eventdata, handles)
-% hObject    handle to preview_button (see GCBO)
+% --- Executes on button press in disengage_button.
+function disengage_button_Callback(hObject, eventdata, handles)
+% hObject    handle to disengage_button (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
