@@ -1,10 +1,10 @@
 classdef Buckets < LoadObjectSTL
     properties
         scaleX = 1.0;
-        scaleY = 1.0;
+        scaleY = 0.7;
         scaleZ = 1.0;
         fileName = "buckets";
-        transformation = SE3(0,0.65,0);
+        transformation = SE3(0,0.3,0);
         faceColour = [0.5,0.5,0.5];
         edgeColour = [0.55,0.55,0.55];
         identifier = "buckets";

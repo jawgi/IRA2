@@ -12,7 +12,6 @@ classdef LoadObjectSTL < handle
         transformation;
         faceColour;
         edgeColour;
-        pointCloud;
     end
 
     properties
@@ -27,7 +26,7 @@ classdef LoadObjectSTL < handle
         sizeY;
         sizeZ;
         objectVertices;
-
+        pointCloud;
     end
 
     properties (Hidden)
@@ -101,7 +100,6 @@ classdef LoadObjectSTL < handle
             object = stlread(filepath); %import ply file
             faces = object.ConnectivityList;
             vertices = object.Points;
-            self.pointCloud = vertices;
             scaledX = vertices(:,1) * self.scaleX;
             scaledY = vertices(:,2) * self.scaleY;
             scaledZ = vertices(:,3) * self.scaleZ;
@@ -112,6 +110,7 @@ classdef LoadObjectSTL < handle
             finalVerticesX = scaledX - centreX;
             finalVerticesY = scaledY - centerY;
             self.objectVertices = [finalVerticesX,finalVerticesY,scaledZ];
+            self.pointCloud = self.objectVertices;
 
             % Convert point cloud locations to homogeneous coordinates
             coordinates = [self.objectVertices, ones(size(self.objectVertices, 1), 1)]';

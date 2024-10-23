@@ -2,7 +2,7 @@ classdef Door < LoadObjectSTL
     properties
         fileName = "door";
         scaleX = 1.0;
-        scaleY = 1.0;
+        scaleY = 0.8;
         scaleZ = 1.0;
         transformation = SE3(2.01,-1.39,0);
         faceColour = [0.68, 0.85, 0.90];
