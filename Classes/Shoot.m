@@ -4,7 +4,7 @@ classdef Shoot < LoadObjectSTL
         scaleX = 1.0;
         scaleY = 1.0;
         scaleZ = 0.7;
-        transformation = SE3(0,-1.45,0.4);
+        transformation = SE3(0,-1.05,0.4);
         faceColour = [0,0,0];
         edgeColour = [0.5,0.5,0.5];
         identifier = "shoot";
