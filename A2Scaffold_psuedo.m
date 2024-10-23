@@ -8,7 +8,9 @@ classdef A2Scaffold_psuedo < handle
                               0.6,0,0.03;       0.6,0.17,0.03;      0.6,-0.17,0.03; ...
                               0.6,0,0.06;       0.6,0.17,0.06;      0.6,-0.17,0.06;];
 
-        rebelFruitPos = dobotFruitGoal;
+        rebelFruitPos = [0.6,0,0.0;        0.6,0.17,0;         0.6,-0.17,0; ...
+                              0.6,0,0.03;       0.6,0.17,0.03;      0.6,-0.17,0.03; ...
+                              0.6,0,0.06;       0.6,0.17,0.06;      0.6,-0.17,0.06;];
 
         rebelFruitGoal = [0.6,0,0.0;        0.6,0.17,0;         0.6,-0.17,0; ...
                               0.6,0,0.03;       0.6,0.17,0.03;      0.6,-0.17,0.03; ...
@@ -17,14 +19,33 @@ classdef A2Scaffold_psuedo < handle
 
     properties
         dobotModel;
+        dobotBase;
         rebelModel;
+        rebelBase;
+
+        % handles
+        mainFig_h;
     end
     
     methods
         function self = A2Scaffold_psuedo() %figuring out general flow of code
             tic;
             self.SimEnv();
-            % load robot models
+
+            self.dobotBase = SE3(0.4,-0.6,0.8).T;
+            dobot = LinearDobotMagician(self.dobotBase);
+            self.dobotModel = dobot.model;
+            self.dobotModel.teach(self.dobotModel.getpos());
+            hold on;
+            input("checked reach of dobot?")
+
+            self.rebelBase = SE3(0.4,0.4,0.8).T;
+            rebel = LinearUR3e(self.rebelBase);
+            self.rebelModel = rebel.model;
+            self.rebelModel.teach(self.rebelModel.getpos());
+            hold on;
+            input("checked reach of rebel?");
+
             % taskComplete = false
             % systemStatus = standby
             % stopStatus = false;
@@ -65,27 +86,21 @@ classdef A2Scaffold_psuedo < handle
         end
 
         function SimEnv(self)            
-           % simulate concrete floor from provided jpg
-            surf([-2,-2;2,2] ...
-                ,[-2,2;-2,2] ...
-                ,[0.01,0.01;0.01,0.01] ...
-                ,'CData',imread('concrete.jpg') ...
-                ,'FaceColor','texturemap');
-            
-            % Populate each fruit based on set positions (will transition to random) and rotate about Z
-            % so they are on the side of linear rail (within workspace)
-            for i = 1:self.fruitCount
-                self.fruit_h(i) = PlaceObject('fruit.ply', self.fruitStartPos(i,:));
-                verts = [get(self.fruit_h(i),'Vertices'), ones(size(get(self.fruit_h(i),'Vertices'),1),1)] * trotz(pi/2);
-                set(self.fruit_h(i),'Vertices',verts(:,1:3));
-            end
+            % Running workspace testing copy
+            run("shahd.m");
             
             % Populate additional safety features?
             self.PlaceSafety();
             
             % make view nicer
             camlight();
-            view(3);
+            view(0,90);
+            zoom(5);
+
+            % self.mainFig_h = gcf;
+            % input("check robots");
+            % pan(fig,)
+
         end
     end
 
