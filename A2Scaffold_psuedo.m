@@ -1,8 +1,8 @@
 classdef A2Scaffold_psuedo < handle
     properties (Constant)
-        dobotFruitPos = [0.6,0,0.0;        0.6,0.17,0;         0.6,-0.17,0; ...
-                              0.6,0,0.03;       0.6,0.17,0.03;      0.6,-0.17,0.03; ...
-                              0.6,0,0.06;       0.6,0.17,0.06;      0.6,-0.17,0.06;];
+        % dobotFruitPos = [0.6,0,0.0;        0.6,0.17,0;         0.6,-0.17,0; ...
+        %                       0.6,0,0.03;       0.6,0.17,0.03;      0.6,-0.17,0.03; ...
+        %                       0.6,0,0.06;       0.6,0.17,0.06;      0.6,-0.17,0.06;];
 
         dobotFruitGoal = [0.6,0,0.0;        0.6,0.17,0;         0.6,-0.17,0; ...
                               0.6,0,0.03;       0.6,0.17,0.03;      0.6,-0.17,0.03; ...
@@ -15,6 +15,8 @@ classdef A2Scaffold_psuedo < handle
         rebelFruitGoal = [0.6,0,0.0;        0.6,0.17,0;         0.6,-0.17,0; ...
                               0.6,0,0.03;       0.6,0.17,0.03;      0.6,-0.17,0.03; ...
                               0.6,0,0.06;       0.6,0.17,0.06;      0.6,-0.17,0.06;];
+        
+        numFruits = 9;
     end
 
     properties
@@ -22,7 +24,9 @@ classdef A2Scaffold_psuedo < handle
         dobotBase;
         rebelModel;
         rebelBase;
-
+        
+        testFruits;
+        dobotFruitPos;
         % handles
         mainFig_h;
     end
@@ -31,21 +35,28 @@ classdef A2Scaffold_psuedo < handle
         function self = A2Scaffold_psuedo() %figuring out general flow of code
             tic;
             self.SimEnv();
-
             self.dobotBase = SE3(0.4,-0.6,0.8).T;
             dobot = LinearDobotMagician(self.dobotBase);
             self.dobotModel = dobot.model;
-            self.dobotModel.teach(self.dobotModel.getpos());
+            % self.dobotModel.teach(self.dobotModel.getpos());
             hold on;
-            input("checked reach of dobot?")
+            % input("checked reach of dobot?")
 
             self.rebelBase = SE3(0.4,0.4,0.8).T;
             rebel = LinearUR3e(self.rebelBase);
             self.rebelModel = rebel.model;
-            self.rebelModel.teach(self.rebelModel.getpos());
+            % self.rebelModel.teach(self.rebelModel.getpos());
             hold on;
-            input("checked reach of rebel?");
+            % input("checked reach of rebel?");
+            
+            disp("These are fruit locations:");
+            self.dobotFruitPos = zeros(self.numFruits,3);
+            for i =1:self.numFruits
+                self.dobotFruitPos(i,:) = self.testFruits.startPoint{i};
+            end
+            disp(self.dobotFruitPos);
 
+            input("done?");
             % taskComplete = false
             % systemStatus = standby
             % stopStatus = false;
@@ -89,13 +100,18 @@ classdef A2Scaffold_psuedo < handle
             % Running workspace testing copy
             run("shahd.m");
             
+            % load fruits and store locations
+            self.testFruits = Fruit("manual",self.numFruits);
+
             % Populate additional safety features?
             self.PlaceSafety();
             
             % make view nicer
             camlight();
-            view(0,90);
-            zoom(5);
+            optimalAzEl = [95.8730,17.8284];
+            view(optimalAzEl);
+            zoom(3);
+            axis([ -1, 2.5, -2.5, 2.5 ,0.25,2]);
 
             % self.mainFig_h = gcf;
             % input("check robots");
