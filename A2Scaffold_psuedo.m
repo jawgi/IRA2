@@ -35,12 +35,12 @@ classdef A2Scaffold_psuedo < handle
         function self = A2Scaffold_psuedo() %figuring out general flow of code
             tic;
             self.SimEnv();
-            self.dobotBase = SE3(0.4,-0.6,0.8).T;
-            dobot = LinearDobotMagician(self.dobotBase);
+            self.dobotBase = SE3(0.4,-0.7,0.8).T;
+            dobot = LinearUR3e(self.dobotBase);
             self.dobotModel = dobot.model;
-            % self.dobotModel.teach(self.dobotModel.getpos());
+            self.dobotModel.teach(self.dobotModel.getpos());
             hold on;
-            % input("checked reach of dobot?")
+            input("checked reach of dobot?")
 
             self.rebelBase = SE3(0.4,0.4,0.8).T;
             rebel = LinearUR3e(self.rebelBase);
@@ -117,6 +117,14 @@ classdef A2Scaffold_psuedo < handle
             % input("check robots");
             % pan(fig,)
 
+        end
+
+        function CreateLinkEllipsoids()
+        
+        end
+
+        function CreateEnvironmentPointCloud()
+        
         end
     end
 
