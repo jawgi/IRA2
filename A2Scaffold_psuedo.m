@@ -27,6 +27,8 @@ classdef A2Scaffold_psuedo < handle
         
         testFruits;
         dobotFruitPos;
+
+        environmentCl;
         % handles
         mainFig_h;
     end
@@ -34,8 +36,8 @@ classdef A2Scaffold_psuedo < handle
     methods
         function self = A2Scaffold_psuedo() %figuring out general flow of code
             tic;
-            self.SimEnv(); % generates point cloud of entire environment as well
-
+            self.SimEnv(false);
+            
             self.dobotBase = SE3(0.4,-0.7,0.8).T;
             dobot = LinearUR3e(self.dobotBase);
             self.dobotModel = dobot.model;
@@ -49,34 +51,8 @@ classdef A2Scaffold_psuedo < handle
             % self.rebelModel.teach(self.rebelModel.getpos());
             hold on;
             % input("checked reach of rebel?");
-            % optimalAzEl = [95.8730,17.8284];
-            % CaptureFigVid(optimalAzEl,"testVid",3);
-            
-            axis tight; % Keep axis limits stable
-            % axis vis3d; % Fix the aspect ratio for 3D rotation
-            % Set up the video writer
-            zoom(1.5);
-            axis([ -2.5, 2.5, -2.5, 2.5 ,0.01,2]);
-            camlight;
-            input("continue?");
-            v = VideoWriter('rotated_point_cloud_enviroment.avi', 'Motion JPEG AVI');
-            v.Quality = 95;
-            open(v);
-            % Specify the number of frames for the animation
-            numFrames = 360;
-            % Rotate the surface plot and capture frames
-            for k = 1:numFrames
-                % Change the view angle
-                view([k, 30]);
-                
-                % Capture the current frame
-                frame = getframe(gcf);
-                writeVideo(v, frame);
-            end
-            % Complete the video writing process
-            close(v);
-            % Close the figure display
-            close(gcf);
+
+            self.CreateRotatedVideo([ -2.5, 2.5, -2.5, 2.5 ,0.01,2], 1.5, 95, 'rotated_video_environment');
 
             %initialising fruit positions
             disp("These are fruit locations:");
@@ -127,9 +103,45 @@ classdef A2Scaffold_psuedo < handle
             toc;
         end
 
-        function SimEnv(self)            
-            % Running workspace testing copy
-            run("shahd.m");
+        function SimEnv(self, pointCloudOn)            
+            %% Load floor
+            floor = Environment("floor","floor");
+
+            %% Load the worktable
+            table = Table();
+            tableCl = table.pointCloud;
+            
+            %% Stage 1 - bucket with all fruits
+            buckets = Buckets();
+            bucketsCl = buckets.pointCloud;
+            
+            %% Buckets for collection, sorted by size and colour
+            sortedBuckets = SortedBuckets();
+            sortedBucketsCl = sortedBuckets.pointCloud;
+            
+            %% Display enclosure
+            walls = Enclosure();
+            door = Door();
+            shoot = Shoot();
+            shootCl = shoot.pointCloud;
+            
+            %% Display e-stops and sensors
+            eStopDoor = EStopObject("doorstop");
+            eStopRobot1 = EStopObject("robot1");
+            eStopRebel = EStopObject("robot2");
+            eStopCollection = EStopObject("collection");
+            sensor = DoorSensor();
+            camera = CameraObject();
+            
+            %% Get Point Cloud of all environment and plot over if needed
+            environmentCl = [tableCl; bucketsCl; sortedBucketsCl; shootCl];
+            if pointCloudOn
+                plot3(environmentCl(:,1),environmentCl(:,2),environmentCl(:,3),'r.');
+            end;
+            self.environmentCl = environmentCl;
+            
+            % %% Fruit plotting
+            % fruit = Fruit("manual",9);
             
             % load fruits and store locations
             self.testFruits = Fruit("manual",self.numFruits);
@@ -137,25 +149,18 @@ classdef A2Scaffold_psuedo < handle
             % Populate additional safety features?
             self.PlaceSafety();
             
-            % make view nicer
+            % make view nicer - found by manually adjust figure
+            set(gcf, 'Windowstyle', 'docked');
             camlight();
             optimalAzEl = [95.8730,17.8284];
             view(optimalAzEl);
             zoom(3);
             axis([ -1, 2.5, -2.5, 2.5 ,0.25,2]);
 
-            % self.mainFig_h = gcf;
-            % input("check robots");
-            % pan(fig,)
-
         end
 
-        function CreateLinkEllipsoids()
-        
-        end
-
-        function CreateEnvironmentPointCloud()
-        
+        function robotEllipsoids = CreateLinkEllipsoids(robotModel)
+            
         end
 
         function qMatrix = CalcJointStates(self,endPos)
@@ -218,6 +223,40 @@ classdef A2Scaffold_psuedo < handle
         function PlaceSafety()
             
             
+        end
+        
+        %% Rotated Video Creation - sourced online and modified for use
+        % https://au.mathworks.com/matlabcentral/answers/397810-creating-an-animated-video-by-rotating-a-surface-plot#answer_1532350
+        % inputs - axis limits and zoom level for modifying current plot
+        % view, final exported video quality and file name
+        function CreateRotatedVideo(axisLim,zoomLvl,vidQuality,vidName)
+            
+            % update view of plot
+            axis tight; % Keep axis limits stable
+            zoom(zoomLvl);
+            % [ -2.5, 2.5, -2.5, 2.5 ,0.01,2]
+            axis(axisLim);
+
+            %set up VideoWriter
+            v = VideoWriter(strcat(vidName,'.avi'), 'Motion JPEG AVI');
+            v.Quality = vidQuality; %set quality (70 default - up to 100)
+            open(v);
+
+            % Specify the number of frames for the animation
+            numFrames = 360;
+
+            % Rotate the surface plot and capture frames
+            for k = 1:numFrames
+                % Change the view angle
+                view([k, 30]);
+                
+                % Capture the current frame
+                frame = getframe(gcf);
+                writeVideo(v, frame);
+            end
+
+            % Complete the video writing process
+            close(v);
         end
     end
 end
