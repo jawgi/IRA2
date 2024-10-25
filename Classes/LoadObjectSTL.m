@@ -110,12 +110,14 @@ classdef LoadObjectSTL < handle
             finalVerticesX = scaledX - centreX;
             finalVerticesY = scaledY - centerY;
             self.objectVertices = [finalVerticesX,finalVerticesY,scaledZ];
-            self.pointCloud = self.objectVertices;
+            % self.pointCloud = self.objectVertices;
 
             % Convert point cloud locations to homogeneous coordinates
             coordinates = [self.objectVertices, ones(size(self.objectVertices, 1), 1)]';
             transformedCoordinates = (self.transformation.T * coordinates)';
             newCoordinates = transformedCoordinates(:, 1:3);
+            self.pointCloud = newCoordinates; %new position
+
             transparency = 1;
             if self.fileName == "enclosure"
                 transparency = 0.1;

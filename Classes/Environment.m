@@ -5,6 +5,8 @@ classdef Environment < handle
     properties
         area;
         subarea;
+        planeNormal = [0,0,-1];
+        planePoint = [0,0,0.01];
     end
 
     methods

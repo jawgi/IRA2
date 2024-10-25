@@ -30,7 +30,7 @@ classdef EStopObject < LoadObjectSTL
                 self.transformation = SE3(0.67,0.82,0.81);
             elseif location == "collection"
                 rotation = trotx(-pi/2) % 90-degree rotation around Z
-                translation = [-0.75;1.77;1.5] % Translation vector
+                translation = [-0.75;1.34881;1.5] % Translation vector
                 T = rotation;
                 T(1:3,4) = translation;
                 self.transformation = SE3(T);

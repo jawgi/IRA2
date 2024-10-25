@@ -3,11 +3,11 @@ classdef SortedBuckets < LoadObjectSTL
         scaleX = 1.0;
         scaleY = 0.9;
         scaleZ = 1.0;
-        fileName = "finalBuckets";
+        fileName = "finalBuckets2";
         transformation = SE3(0,1.05,0);
         faceColour = [0.95,0.95,0.95];
         edgeColour = [0.9,0.9,0.9];
-        identifier = "finalBuckets";
+        identifier = "finalBuckets2";
     end
 
     methods
