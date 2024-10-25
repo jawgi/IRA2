@@ -19,7 +19,7 @@ classdef Fruit < handle
     % 
     % properties (Access = protected)
         types = ["Greengage","Apricot","Plum"];
-        colourNames = ["Green","Orange","Plum"];
+        colourNames = ["Green","Orange","Purple"];
         green = [0 0.5 0];
         orange = [1 0.5 0];
         purple = [0.5 0 0.5];
