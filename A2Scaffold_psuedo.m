@@ -1,9 +1,5 @@
 classdef A2Scaffold_psuedo < handle
     properties (Constant)
-        % dobotFruitPos = [0.6,0,0.0;        0.6,0.17,0;         0.6,-0.17,0; ...
-        %                       0.6,0,0.03;       0.6,0.17,0.03;      0.6,-0.17,0.03; ...
-        %                       0.6,0,0.06;       0.6,0.17,0.06;      0.6,-0.17,0.06;];
-
         dobotFruitGoal = [0.6,0,0.0;        0.6,0.17,0;         0.6,-0.17,0; ...
                               0.6,0,0.03;       0.6,0.17,0.03;      0.6,-0.17,0.03; ...
                               0.6,0,0.06;       0.6,0.17,0.06;      0.6,-0.17,0.06;];
@@ -15,8 +11,25 @@ classdef A2Scaffold_psuedo < handle
         rebelFruitGoal = [0.6,0,0.0;        0.6,0.17,0;         0.6,-0.17,0; ...
                               0.6,0,0.03;       0.6,0.17,0.03;      0.6,-0.17,0.03; ...
                               0.6,0,0.06;       0.6,0.17,0.06;      0.6,-0.17,0.06;];
-        
+        %% number of fruits chosen        
         numFruits = 9;
+        
+        %% Setting drop off points for each bucket 
+        greenGoalPos = [ -0.45, -0.15, 0.9 ];
+        orangeGoalPos = [ 0, -0.15, 0.9 ];
+        purpleGoalPos = [ 0.45, -0.15, 0.9 ];
+        
+        smallGreenGoalPos = [ -0.4, 0.85, 0.95 ];
+        smallOrangeGoalPos = [ 0, 0.85, 0.95 ];
+        smallPurpleGoalPos = [ 0.4, 0.85, 0.95 ];
+
+        mediumGreenGoalPos = [ -0.4, 0.85, 1.25 ];
+        mediumOrangeGoalPos = [ 0, 0.85, 1.25 ];
+        mediumPurpleGoalPos = [ 0.4, 0.85, 1.25 ];
+
+        largeGreenGoalPos = [ -0.4, 0.85, 1.55 ];
+        largeOrangeGoalPos = [ 0, 0.85, 1.55 ];
+        largePurpleGoalPos = [ 0.4, 0.85, 1.55 ];
     end
 
     properties
@@ -36,7 +49,9 @@ classdef A2Scaffold_psuedo < handle
     methods
         function self = A2Scaffold_psuedo() %figuring out general flow of code
             tic;
-            self.SimEnv(false);
+            %% Simulating the environment with robot models.
+
+            self.SimulateEnvironment(false);
             
             self.dobotBase = SE3(0.4,-0.7,0.8).T;
             dobot = LinearUR3e(self.dobotBase);
@@ -52,7 +67,7 @@ classdef A2Scaffold_psuedo < handle
             hold on;
             % input("checked reach of rebel?");
 
-            self.CreateRotatedVideo([ -2.5, 2.5, -2.5, 2.5 ,0.01,2], 1.5, 95, 'rotated_video_environment');
+            % self.CreateRotatedVideo([ -2.5, 2.5, -2.5, 2.5 ,0.01,2], 1.5, 95, 'rotated_video_environment');
 
             %initialising fruit positions
             disp("These are fruit locations:");
@@ -61,6 +76,24 @@ classdef A2Scaffold_psuedo < handle
                 self.dobotFruitPos(i,:) = self.testFruits.startPoint{i};
             end
             disp(self.dobotFruitPos);
+            
+            allGoalPos = [ self.greenGoalPos;
+                                    self.orangeGoalPos;
+                                    self.purpleGoalPos;
+                                    self.smallGreenGoalPos;
+                                    self.smallOrangeGoalPos;
+                                    self.smallPurpleGoalPos;
+                                    self.mediumGreenGoalPos;
+                                    self.mediumOrangeGoalPos;
+                                    self.mediumPurpleGoalPos;
+                                    self.largeGreenGoalPos;
+                                    self.largeOrangeGoalPos;
+                                    self.largePurpleGoalPos]
+            for i = 1:12
+                size = 0.025;
+                colour = 'r';
+                self.PlotForeignObject('sphere',allGoalPos(i,:),size,size,colour);
+            end
 
             input("done?");
 
@@ -101,9 +134,10 @@ classdef A2Scaffold_psuedo < handle
                         %%ASYNCHRONUS STOP/COLLISION TESTING
                 % end
             toc;
+            % code for task completion status or at least time taken for entire task
         end
 
-        function SimEnv(self, pointCloudOn)            
+        function SimulateEnvironment(self, pointCloudOn)            
             %% Load floor
             floor = Environment("floor","floor");
 
@@ -133,15 +167,12 @@ classdef A2Scaffold_psuedo < handle
             sensor = DoorSensor();
             camera = CameraObject();
             
-            %% Get Point Cloud of all environment and plot over if needed
+            %% Get Point Cloud of all environment and plot if needed
             environmentCl = [tableCl; bucketsCl; sortedBucketsCl; shootCl];
             if pointCloudOn
                 plot3(environmentCl(:,1),environmentCl(:,2),environmentCl(:,3),'r.');
             end;
             self.environmentCl = environmentCl;
-            
-            % %% Fruit plotting
-            % fruit = Fruit("manual",9);
             
             % load fruits and store locations
             self.testFruits = Fruit("manual",self.numFruits);
@@ -156,14 +187,13 @@ classdef A2Scaffold_psuedo < handle
             view(optimalAzEl);
             zoom(3);
             axis([ -1, 2.5, -2.5, 2.5 ,0.25,2]);
-
         end
 
-        function robotEllipsoids = CreateLinkEllipsoids(robotModel)
+        function robotEllipsoids = CreateLinkEllipsoids(self, robotModel)
             
         end
 
-        function qMatrix = CalcJointStates(self,endPos)
+        function qMatrix = CalcJointStates(self, endPos)
             % disp("Entered endPos: ");
             % disp(endPos);
             
@@ -180,7 +210,7 @@ classdef A2Scaffold_psuedo < handle
             qMatrix = jtraj(currentPos, newQ, 100);
         end
 
-        function MoveRobot(self,endPos,status)
+        function MoveRobot(self,endPos, status)
             % calculate joint states from the desired end transform
             qMatrix = self.CalcJointStates(endPos);
 
@@ -216,13 +246,87 @@ classdef A2Scaffold_psuedo < handle
                 endPos
             end
         end
+   
+        %% Sets up the specified safety tests for simulated sensor input and upcoming collision
+        function self.safetyTest(self, type)
+            switch type
+                case {'sensor', 'Sensor'}
+                    % add simulated sensor readings to environment (like someone entered enclosure)
+                    % e-stop function when this occurs
+                case {'collision', 'Collision'}
+                otherwise
+                    disp('Invalid test. Specify type of test: sensor/collision');
+                    return;
+            end
+        end
     end
 
     methods(Static)
 
+        function dropFruit(fruit)
+            % add in gradual drop of fruit for better simulation (modify Z values in for loop?
+        end
+
         function PlaceSafety()
             
             
+        end
+
+        %% Plots a plane creates meshgrid of points on the plane - may be used for asynchronus safety
+        function points = PlotPlane(axis,maxDim,gridInterval,planePoint)
+            switch axis
+                case {'X','x'}
+                    [Y,Z] = meshgrid(-maxDim:gridInterval:maxDim,-maxDim:gridInterval:maxDim);
+                    X = repmat(planePoint,size(Y,1),size(Y,2));
+                case {'Y','y'}
+                    [X,Z] = meshgrid(-maxDim:gridInterval:maxDim,-maxDim:gridInterval:maxDim);
+                    Y = repmat(planePoint,size(X,1),size(X,2));
+                case {'Z','z'}
+                    [X,Y] = meshgrid(-maxDim:gridInterval:maxDim,-maxDim:gridInterval:maxDim);
+                    Z = repmat(planePoint,size(X,1),size(X,2));
+                otherwise
+                    disp('axis entered invalid. Specify X, Y, or Z')
+                    points = nan(1,3);
+                    return;
+            end
+            points = [X(:),Y(:),Z(:)];
+            surf(X,Y,Z);
+        end
+
+         %% Plots foreign object in current figure and obtains point cloud
+         function points = PlotForeignObject(shape,position,minSide,maxSide,colour)
+            switch shape
+                case 'sphere'
+                    radius = minSide
+                    center = position
+            
+                    % Create the sphere
+                    [X, Y, Z] = sphere(30); % 30 specifies the resolution of the sphere
+            
+                    % Scale and shift the sphere to the desired position and size
+                    X = radius * X + center(1);
+                    Y = radius * Y + center(2);
+                    Z = radius * Z + center(3);
+                case 'rectangle'
+                centerpnt = position;
+                [vertex,faces,faceNormals] = RectangularPrism(centerpnt-minSide/2, centerpnt+maxSide/2);
+                otherwise
+                    disp('Specify shape of foreign object: (Sphere/Rectangle)');
+                    points = nan(1,3);
+                    return;
+            end
+            %Plot object
+            points = [X(:),Y(:),Z(:)];
+            surf(X, Y, Z, 'FaceAlpha', 0.7, 'EdgeColor','none', 'FaceColor',colour);
+        end
+
+        %% Plots point cloud from matrix of points with modifiable parameters 
+        function pointCloud_h = PlotPointCloud(points,colour,shape) 
+            X = points(:,1);
+            Y = points(:,2);
+            Z = points(:,3);
+        
+            pointCloud_h = plot3(X,Y,Z,strcat(colour,shape));
         end
         
         %% Rotated Video Creation - sourced online and modified for use
