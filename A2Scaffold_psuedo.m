@@ -56,10 +56,11 @@ classdef A2Scaffold_psuedo < handle
             % axis vis3d; % Fix the aspect ratio for 3D rotation
             % Set up the video writer
             zoom(1.5);
-            axis([ -3.5, 3.5, -2.5, 2.5 ,0.01,2]);
+            axis([ -2.5, 2.5, -2.5, 2.5 ,0.01,2]);
             camlight;
             input("continue?");
-            v = VideoWriter('rotating_surface_plot.mp4');
+            v = VideoWriter('rotated_point_cloud_enviroment.avi', 'Motion JPEG AVI');
+            v.Quality = 95;
             open(v);
             % Specify the number of frames for the animation
             numFrames = 360;
