@@ -231,11 +231,13 @@ classdef A2Scaffold_psuedo < handle
         % view, final exported video quality and file name
         function CreateRotatedVideo(axisLim,zoomLvl,vidQuality,vidName)
             
-            % update view of plot
+            % update view of plot and use renderer for better image quality
             axis tight; % Keep axis limits stable
             zoom(zoomLvl);
             % [ -2.5, 2.5, -2.5, 2.5 ,0.01,2]
             axis(axisLim);
+            
+            input("check");
 
             %set up VideoWriter
             v = VideoWriter(strcat(vidName,'.avi'), 'Motion JPEG AVI');
