@@ -34,13 +34,14 @@ classdef A2Scaffold_psuedo < handle
     methods
         function self = A2Scaffold_psuedo() %figuring out general flow of code
             tic;
-            self.SimEnv();
+            self.SimEnv(); % generates point cloud of entire environment as well
+
             self.dobotBase = SE3(0.4,-0.7,0.8).T;
             dobot = LinearUR3e(self.dobotBase);
             self.dobotModel = dobot.model;
-            self.dobotModel.teach(self.dobotModel.getpos());
+            % self.dobotModel.teach(self.dobotModel.getpos());
             hold on;
-            input("checked reach of dobot?")
+            % input("checked reach of dobot?")
 
             self.rebelBase = SE3(0.4,0.4,0.8).T;
             rebel = LinearUR3e(self.rebelBase);
@@ -48,7 +49,35 @@ classdef A2Scaffold_psuedo < handle
             % self.rebelModel.teach(self.rebelModel.getpos());
             hold on;
             % input("checked reach of rebel?");
+            % optimalAzEl = [95.8730,17.8284];
+            % CaptureFigVid(optimalAzEl,"testVid",3);
             
+            axis tight; % Keep axis limits stable
+            % axis vis3d; % Fix the aspect ratio for 3D rotation
+            % Set up the video writer
+            zoom(1.5);
+            axis([ -3.5, 3.5, -2.5, 2.5 ,0.01,2]);
+            camlight;
+            input("continue?");
+            v = VideoWriter('rotating_surface_plot.mp4');
+            open(v);
+            % Specify the number of frames for the animation
+            numFrames = 360;
+            % Rotate the surface plot and capture frames
+            for k = 1:numFrames
+                % Change the view angle
+                view([k, 30]);
+                
+                % Capture the current frame
+                frame = getframe(gcf);
+                writeVideo(v, frame);
+            end
+            % Complete the video writing process
+            close(v);
+            % Close the figure display
+            close(gcf);
+
+            %initialising fruit positions
             disp("These are fruit locations:");
             self.dobotFruitPos = zeros(self.numFruits,3);
             for i =1:self.numFruits
@@ -57,6 +86,7 @@ classdef A2Scaffold_psuedo < handle
             disp(self.dobotFruitPos);
 
             input("done?");
+
             % taskComplete = false
             % systemStatus = standby
             % stopStatus = false;
@@ -125,6 +155,60 @@ classdef A2Scaffold_psuedo < handle
 
         function CreateEnvironmentPointCloud()
         
+        end
+
+        function qMatrix = CalcJointStates(self,endPos)
+            % disp("Entered endPos: ");
+            % disp(endPos);
+            
+            % get the current joint states of robot in workspace
+            currentPos = self.robotModel.getpos();
+            
+            % calculate the goal joint states based on required endPos and
+            % the current joint state for q0
+            % newQ = self.robotModel.ikine(endPos, 'q0', currentPos, 'mask', [1,1,0,0,0,0]);
+            newQ = self.robotModel.ikcon(endPos, currentPos);
+            
+            % use Quintic Polynomial method to generate and store our joint
+            % state waypoints over 100 steps
+            qMatrix = jtraj(currentPos, newQ, 100);
+        end
+
+        function MoveRobot(self,endPos,status)
+            % calculate joint states from the desired end transform
+            qMatrix = self.CalcJointStates(endPos);
+
+            % display progress message showing which brick is being moved
+            disp("Brick Status: (0 is no brick being moved)");
+            disp(status);
+            % endPos;
+            
+            %for each joint state, animate it, get the resultant transform then check if brick should
+            % be moving too. If so, update brick mesh verties so location
+            % updated - latter not really working
+            for i =1:size(qMatrix,1)
+                self.robotModel.animate(qMatrix(i,:));
+                currentTr = self.robotModel.fkineUTS(qMatrix(i,:));
+                    switch status
+                        case 1-9 %brick moving too
+                            verticies = get(self.brick_h(status), 'Verticies');
+                            transformedVertices = [verticies, ones(size(verticies,1),1)] *currentTr;
+                            set(self.brick_h(status), 'Verticies', transformedVertices(:,1:3));
+                        otherwise
+                            %nothing - only move brick when it's been picked up
+                    end
+                % update figure
+                pause(0.01);
+                drawnow();
+            end
+            % store final transform and compare to originally asked for position
+            % - only outputs when it isn't within tolerance
+            finalTr = currentTr;
+            if ~isempty(find(0.005 < finalTr-endPos,1))
+                warning('Desired EndEffector is different from calculated and animated endPos')
+                finalTr
+                endPos
+            end
         end
     end
 

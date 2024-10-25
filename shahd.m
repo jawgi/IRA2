@@ -25,8 +25,6 @@ walls = Enclosure();
 door = Door();
 shoot = Shoot();
 
-wallsCl = walls.pointCloud;
-doorCl = door.pointCloud;
 shootCl = shoot.pointCloud;
 
 %% Display e-stops and sensors
@@ -35,65 +33,59 @@ eStopRobot1 = EStopObject("robot1");
 eStopRebel = EStopObject("robot2");
 eStopCollection = EStopObject("collection");
 
-eStopDoorCl = eStopDoor.pointCloud;
-eStopRobot1Cl = eStopRobot1.pointCloud;
-eStopRebelCl = eStopRebel.pointCloud;
-eStopCollectionCl = eStopCollection.pointCloud;
-
 sensor = DoorSensor();
 camera = CameraObject();
 
-sensorCl = sensor.pointCloud;
-cameraCl = camera.pointCloud;
-
 %% Get Point Cloud of all environment and plot over
-environmentCl = [tableCl; bucketsCl; sortedBucketsCl; wallsCl; ...
-                            doorCl; shootCl; eStopDoorCl; eStopRobot1Cl; ...
-                            eStopRebelCl; eStopCollectionCl; sensorCl; cameraCl];
+environmentCl = [tableCl; bucketsCl; sortedBucketsCl; shootCl];
 
 plot3(environmentCl(:,1),environmentCl(:,2),environmentCl(:,3),'r.');
-input("next")
+% fig_h = gcf;
+% view(3);
+% rotate3d(gcf);
+
+% input("next");
 %% Fruit plotting
 fruit = Fruit("manual",9);
 
-%% Load robots
-
-hold on;
-
-
-%% PointClouds
-testpoints = PlotPlane('Y',4,0.5,-3);
-
-plot_h = PlotPointCloud(testpoints,'r','.');
-axis equal;
-hold on;
-% spheretest
-qty = 9;
-% fruit = Fruit("manual",qty);
-surfacePts = cell(1,qty);
-allPoints =  [ ];
-            for i=1:qty
-                radius = 0.4;
-                center = [1,1,5];
-        
-                % Create the sphere
-                [X, Y, Z] = sphere(30); % 30 specifies the resolution of the sphere
-        
-                % Scale and shift the sphere to the desired position and size
-                X = radius * X + center(1);
-                Y = radius * Y + center(2);
-                Z = radius * Z + center(3);
-        
-                % Plot the sphere
-                disp(["i = "+i]);
-                spherePts = [X(:),Y(:),Z(:)];
-                % surfacePts = [surfacePts;spherePts]
-                surfacePts{1,i} = [surfacePts{1,i};spherePts];
-                allPoints = [allPoints;surfacePts{1,i}];
-            end
-            
-            plot3(allPoints(:,1),allPoints(:,2),allPoints(:,3), 'r.');
-            axis equal;
+% %% Load robots
+% 
+% hold on;
+% 
+% 
+% %% PointClouds
+% testpoints = PlotPlane('Y',4,0.5,-3);
+% 
+% plot_h = PlotPointCloud(testpoints,'r','.');
+% axis equal;
+% hold on;
+% % spheretest
+% qty = 9;
+% % fruit = Fruit("manual",qty);
+% surfacePts = cell(1,qty);
+% allPoints =  [ ];
+%             for i=1:qty
+%                 radius = 0.4;
+%                 center = [1,1,5];
+% 
+%                 % Create the sphere
+%                 [X, Y, Z] = sphere(30); % 30 specifies the resolution of the sphere
+% 
+%                 % Scale and shift the sphere to the desired position and size
+%                 X = radius * X + center(1);
+%                 Y = radius * Y + center(2);
+%                 Z = radius * Z + center(3);
+% 
+%                 % Plot the sphere
+%                 % disp(["i = "+i]);
+%                 spherePts = [X(:),Y(:),Z(:)];
+%                 % surfacePts = [surfacePts;spherePts]
+%                 surfacePts{1,i} = [surfacePts{1,i};spherePts];
+%                 allPoints = [allPoints;surfacePts{1,i}];
+%             end
+% 
+%             plot3(allPoints(:,1),allPoints(:,2),allPoints(:,3), 'r.');
+%             axis equal;
 
 
 
