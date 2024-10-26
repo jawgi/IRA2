@@ -11,6 +11,12 @@ classdef A2Scaffold_psuedo < handle
         rebelFruitGoal = [0.6,0,0.0;        0.6,0.17,0;         0.6,-0.17,0; ...
                               0.6,0,0.03;       0.6,0.17,0.03;      0.6,-0.17,0.03; ...
                               0.6,0,0.06;       0.6,0.17,0.06;      0.6,-0.17,0.06;];
+
+        dobotLinkDim = [ ];
+        dobotFilename = 'dobot_qMatrix';
+        rebelLinkDim = [ ];
+        rebelFilename = 'rebel_qMatrix';
+
         %% number of fruits chosen        
         numFruits = 9;
         
@@ -35,8 +41,13 @@ classdef A2Scaffold_psuedo < handle
     properties
         dobotModel;
         dobotBase;
+        dobotEllipsoidPts;
+        dobotQMatrix;
+
         rebelModel;
         rebelBase;
+        rebelEllipsoidPts;
+        rebelQMatrix;
         
         testFruits;
         dobotFruitPos;
@@ -44,13 +55,18 @@ classdef A2Scaffold_psuedo < handle
         environmentCl;
         % handles
         mainFig_h;
+
+        taskComplete;           % true - all fruits moved to final sorted buckets. false - fruits still in stage 0 or stage 1 of task completion.
+        systemStatus;           % true - system running and robot moving. false - system on standby (either before starting or after an e-stop operation)
+        stopStatus;                 % true - e-stop engaged. false - e-stop disengaged
     end
     
     methods
         function self = A2Scaffold_psuedo() %figuring out general flow of code
             tic;
+            count = 1;
             %% Simulating the environment with robot models.
-
+            
             self.SimulateEnvironment(false);
             
             self.dobotBase = SE3(0.4,-0.7,0.8).T;
@@ -70,42 +86,53 @@ classdef A2Scaffold_psuedo < handle
             % self.CreateRotatedVideo([ -2.5, 2.5, -2.5, 2.5 ,0.01,2], 1.5, 95, 'rotated_video_environment');
 
             %initialising fruit positions
-            disp("These are fruit locations:");
+            % disp("These are fruit locations:");
             self.dobotFruitPos = zeros(self.numFruits,3);
             for i =1:self.numFruits
                 self.dobotFruitPos(i,:) = self.testFruits.startPoint{i};
             end
-            disp(self.dobotFruitPos);
+            % disp(self.dobotFruitPos);
             
-            allGoalPos = [ self.greenGoalPos;
-                                    self.orangeGoalPos;
-                                    self.purpleGoalPos;
-                                    self.smallGreenGoalPos;
-                                    self.smallOrangeGoalPos;
-                                    self.smallPurpleGoalPos;
-                                    self.mediumGreenGoalPos;
-                                    self.mediumOrangeGoalPos;
-                                    self.mediumPurpleGoalPos;
-                                    self.largeGreenGoalPos;
-                                    self.largeOrangeGoalPos;
-                                    self.largePurpleGoalPos]
-            for i = 1:12
-                size = 0.025;
-                colour = 'r';
-                self.PlotForeignObject('sphere',allGoalPos(i,:),size,size,colour);
-            end
+            input("done loading environment?");
 
-            input("done?");
+            self.taskComplete = false;
+            self.systemStatus = false;
+            self.stopStatus = false;
 
-            % taskComplete = false
-            % systemStatus = standby
-            % stopStatus = false;
-                % while(~taskComplete)
-                    % if resume/start button pressed || systemStatus == running
-                        % stopStatus = false;
-                        % if systemStatus == standby
-                            % load qMatrix files for both robot models if available(previously stopped) or create a file (first started)
-                            % systemStatus = running
+            while(~self.taskComplete)
+                if ~self.systemStatus                       % System on standby
+                    if self.stopStatus                          % E-stop engaged
+                        input("Disengage e-stop?");
+                        self.stopStatus = false;            % Disengage e-stop
+                    else
+                        if self.CheckStart                      % System start/resume selected - HAVE TO EDIT FUNCTION FUNCTIONALITY
+                            self.systemStatus = true;       % Set system to running
+                            self.dobotQMatrix = self.LoadQMatrix(self.dobotModel,self.dobotFilename);       % Load qMatrix for dobot
+                            self.rebelQMatrix = self.LoadQMatrix(self.rebelModel,self.rebelFilename);           % Load qMatrix for rebel
+                            input("stored qMatrix for both robots?");
+                        end
+                    end
+                else
+                    input("Starting operation of robot.");
+                    count = count +1;       %hypothetical run
+                    if count > 3
+                        input("Finish?");
+                        self.taskComplete = true;
+                        break;
+                    end
+                    
+                    input("Stop?");
+                    self.stopStatus = true;
+                    self.systemStatus = false;
+                    
+                    % if eStop pressed || human detected within safety barriers
+                        % store current qMatrix for both robots into files (replace old ones)
+                        % stopStatus = true
+                        % systemStatus = standby
+                        % %break; %needed?
+                    % else
+                end
+
 
                         % if eStop pressed || human detected within safety barriers
                             % store current qMatrix for both robots into files (replace old ones)
@@ -132,7 +159,12 @@ classdef A2Scaffold_psuedo < handle
                             % loadHuman within safety barriers %can comment in and out in demo 
                             % loadObstacle between robots within robots workspace %can comment in and out in demo
                         %%ASYNCHRONUS STOP/COLLISION TESTING
-                % end
+            end
+            delete(strcat(self.dobotFilename,'.xls'));
+            pause(1);
+            delete(strcat(self.rebelFilename,'.xls'));
+            pause(1);
+            input("deleted previous files?");
             toc;
             % code for task completion status or at least time taken for entire task
         end
@@ -189,8 +221,42 @@ classdef A2Scaffold_psuedo < handle
             axis([ -1, 2.5, -2.5, 2.5 ,0.25,2]);
         end
 
-        function robotEllipsoids = CreateLinkEllipsoids(self, robotModel)
+        function  robotEllipsoids = CreateLinkEllipsoids(self, robotModel)
             
+            centerPoint = [0,0,0];
+            radii = [1,0.5,0.5];
+            [X,Y,Z] = ellipsoid( centerPoint(1), centerPoint(2), centerPoint(3), radii(1), radii(2), radii(3) );
+            for i = 1:4
+                robot.points{i} = [X(:),Y(:),Z(:)];
+                warning off
+                robot.faces{i} = delaunay(robot.points{i});    
+                warning on;
+            end
+            robot.plot3d([0,0,0]);
+            axis equal
+            camlight
+        end
+        
+        function status = CheckStart(self) % ADD FUNCTIONALITY TO CHECK IF RESUME/START PRESSED
+            input("Press enter to start. (Will be replaced by actual checking)");
+            status = true;
+        end
+
+        %% % Load qMatrix files for both robot models if available (previously stopped) or create a file (first started)
+        function qMatrix = LoadQMatrix(self,robotModel,filename)
+            filename = strcat(filename,'.xls'); % creates full filename
+            if isfile(filename)
+                 % qMatrix = importdata(strcat(filename,'.mat'))
+                 qMatrix = readmatrix(filename); %stores previous qMatrix data into variable
+            else
+                 qMatrix = robotModel.getpos();
+                 self.SaveQMatrix(qMatrix,filename);
+            end
+        end
+
+        function SaveQMatrix(self,qMatrix,filename)
+            filename = strcat(filename); % creates full filename with xls to save qMatrix to spreadsheet
+            writematrix(qMatrix, filename); %
         end
 
         function qMatrix = CalcJointStates(self, endPos)
@@ -266,12 +332,34 @@ classdef A2Scaffold_psuedo < handle
         function dropFruit(fruit)
             % add in gradual drop of fruit for better simulation (modify Z values in for loop?
         end
-
+        
+        %% Calculate distance (dist) between consecutive points
+        function dist=dist2pts(pt1,pt2)
+            % If 2D
+            if size(pt1,2) == 2
+                dist=sqrt((pt1(:,1)-pt2(:,1)).^2+...
+                          (pt1(:,2)-pt2(:,2)).^2);
+            % If 3D          
+            elseif size(pt1,2) == 3
+                dist=sqrt((pt1(:,1)-pt2(:,1)).^2+...
+                          (pt1(:,2)-pt2(:,2)).^2+...
+                          (pt1(:,3)-pt2(:,3)).^2);
+            % If 6D like two poses
+            elseif size(pt1,2) == 6
+                dist=sqrt((pt1(:,1)-pt2(:,1)).^2+...
+                          (pt1(:,2)-pt2(:,2)).^2+...
+                          (pt1(:,3)-pt2(:,3)).^2+...
+                          (pt1(:,4)-pt2(:,4)).^2+...
+                          (pt1(:,5)-pt2(:,5)).^2+...
+                          (pt1(:,6)-pt2(:,6)).^2);
+            end
+        end
+        
         function PlaceSafety()
             
             
         end
-
+        
         %% Plots a plane creates meshgrid of points on the plane - may be used for asynchronus safety
         function points = PlotPlane(axis,maxDim,gridInterval,planePoint)
             switch axis
@@ -293,31 +381,48 @@ classdef A2Scaffold_psuedo < handle
             surf(X,Y,Z);
         end
 
-         %% Plots foreign object in current figure and obtains point cloud
-         function points = PlotForeignObject(shape,position,minSide,maxSide,colour)
+        %% Plots foreign object in current figure and obtains point cloud
+        function points = PlotForeignObject(shape,position,colour,side1,side2,side3)
+            center = position;
+            alpha = 0.5;
+
             switch shape
                 case 'sphere'
-                    radius = minSide
-                    center = position
-            
+                    radius = side1;
                     % Create the sphere
                     [X, Y, Z] = sphere(30); % 30 specifies the resolution of the sphere
-            
+                
                     % Scale and shift the sphere to the desired position and size
                     X = radius * X + center(1);
                     Y = radius * Y + center(2);
                     Z = radius * Z + center(3);
+                
                 case 'rectangle'
-                centerpnt = position;
-                [vertex,faces,faceNormals] = RectangularPrism(centerpnt-minSide/2, centerpnt+maxSide/2);
+                    if nargin < 5
+                        side2 = side1;              % only given 1 side dimension - square
+                    end
+                    centerpnt = position;
+                    [vertex,faces,faceNormals] = RectangularPrism(centerpnt-side1/2, centerpnt+side2/2);
+                    % need to figure out how to get point cloud
+
+                case 'ellipsoid'
+                    if nargin == 6
+                        radii = [side1,side2,side3];
+                    else
+                        disp('3 radii not specified - resorting to default.');
+                        radii = [0.1,0.2,0.3]; % Default radii if not fully specified
+                    end
+                    [X,Y,Z] = ellipsoid( center(1), center(2), center(3), radii(1), radii(2), radii(3));
+
                 otherwise
-                    disp('Specify shape of foreign object: (Sphere/Rectangle)');
+                    disp('Specify shape of foreign object: (Sphere/Rectangle/Ellipsoid)');
                     points = nan(1,3);
                     return;
             end
-            %Plot object
+
+            % Plot object
             points = [X(:),Y(:),Z(:)];
-            surf(X, Y, Z, 'FaceAlpha', 0.7, 'EdgeColor','none', 'FaceColor',colour);
+            surf(X, Y, Z, 'FaceAlpha', alpha, 'EdgeColor','none', 'FaceColor',colour);
         end
 
         %% Plots point cloud from matrix of points with modifiable parameters 
