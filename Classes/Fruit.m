@@ -102,7 +102,8 @@ classdef Fruit < handle
             coordinates = [scaled, ones(size(scaled, 1), 1)]';
             transformedCoordinates = (self.startPoint{index}.T * coordinates)';
             self.pointCloud = transformedCoordinates;
-            trisurf(faceData,transformedCoordinates(:,1),transformedCoordinates(:,2),transformedCoordinates(:,3),'FaceColor', self.colourCode{index},'EdgeColor', 'none');
+            trisurf(faceData,transformedCoordinates(:,1),transformedCoordinates(:,2),transformedCoordinates(:,3), ...
+                'FaceColor', self.colourCode{index},'EdgeColor', 'none', 'Tag',self.tag{index});
         end
 
         function radii = randomSize(self,index)
