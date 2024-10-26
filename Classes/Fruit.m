@@ -49,7 +49,7 @@ classdef Fruit < handle
             self.dropPoint = cell(1,qty);
             self.x = zeros(1,qty);
             self.y = zeros(1,qty);
-            self.z = zeros(1,qty
+            self.z = zeros(1,qty);
             self.pointCloud = cell(1,qty);
             self.plotFruit(qty);
         end
