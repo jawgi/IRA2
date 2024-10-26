@@ -5,7 +5,8 @@ classdef A2Scaffold_psuedo < handle
         dobotFilename = 'dobot_qMatrix';
         rebelLinkDim = [ ];
         rebelFilename = 'rebel_qMatrix';
-
+        steps = 50;
+        
         %% number of fruits chosen        
         numFruits = 9;
         
@@ -35,12 +36,18 @@ classdef A2Scaffold_psuedo < handle
         dobotEllipsoidPts;
         dobotQMatrix;
         dobotGoalsCompleted;
+        currentDobotGoal;
+        nextDobotGoal;
+        dobotStatus;
 
         rebelModel;
         rebelBase;
         rebelEllipsoidPts;
         rebelQMatrix;
         rebelGoalsCompleted;
+        currentRebelGoal;
+        nextRebelGoal;
+        rebelStatus;
         
         allFruits;
 
@@ -78,13 +85,18 @@ classdef A2Scaffold_psuedo < handle
             
             input("done loading environment?");
 
-            self.taskComplete = false;
+            self.taskComplete = false;                  % Initialise all variables
             self.systemStatus = false;
             self.stopStatus = false;
             self.dobotGoalsCompleted = 0;
             self.rebelGoalsCompleted = 0;
-            while(~self.taskComplete)
+            self.dobotStatus = 0;                           % 0 is picking up, 0 is placing down.
+            self.rebelStatus = 0;
+            
+            %% Start of loop - continues until task is complete
+            while(~self.taskComplete)                   
                 if ~self.systemStatus                       % System on standby
+                    %% Checking system status and e-stop status to adhere to two action start/resume
                     if self.stopStatus                          % E-stop engaged
                         input("Disengage e-stop?");
                         self.stopStatus = false;            % Disengage e-stop
@@ -99,6 +111,7 @@ classdef A2Scaffold_psuedo < handle
                 else
                     input("Starting operation of robot.");
                     
+                    %% Checking if E-stop pressed or safetyTest found unsafe to continue
                     if self.EStopPressed(true) || ~self.safetyTest('sensor')                % Check if hardware or GUI e-stop is pressed or sensor senses object in workspace (unsafe environment)
                         self.stopStatus = true;                                                             % Change relevant variables to stop system operation
                         self.systemStatus = false;
@@ -106,39 +119,65 @@ classdef A2Scaffold_psuedo < handle
                         self.SaveQMatrix(self.rebelQMatrix,self.rebelFilename);
                     end
                     
-
-
-                    % check if each robotGoalsCompleted complete and only continue if incomplete - 
-                    % so when dobot finished but rebel continues, dobot isn't being given any comands
-                    % store currentGoalQ for each robot - i.e. # of goals completed+1
-                    % create trajectory for each robot
-                        % check collisions and store updated trajectory
-                    % move robots by respective qMatrix - BUT ONLY THE FIRST VALUE OR FIRST 5 depending on how slow it is
-                        % ensure code is also moving faces of fruit
-                    % that way the robot doesn't complete entire trajectory without checking e-stop status or whatever
-                    % next - CheckGoalCompleted for each robot
-                        % if completed goal, then self.robotGoalsCompleted++
-                        % initiate DropFruit where it'll simulate fruit dropping naturally
-
-                    count = count +1;       %hypothetical run
-                    if count > 2
-                        input("Finish?");
-                        self.dobotGoalsCompleted = 9;
-                        self.rebelGoalsCompleted = 9;
-                        if self.dobotGoalsCompleted == self.rebelGoalsCompleted ...
-                                        && self.numFruits == self.dobotGoalsCompleted
-                            self.taskComplete = true;
-                            break;
+                    %% Checking if each robot has goals to complete and storing the picking and placing goals from next fruit to be picked
+                    if self.dobotGoalsCompleted < self.numFruits
+                        self.currentDobotGoal = self.allFruits.startPoint{self.dobotGoalsCompleted+1};
+                        self.nextDobotGoal = self.allFruits.midPoint{self.dobotGoalsCompleted+1};
+                        
+                        % Checking if dobot is in the state of picking or placing and calculate joint states depending on that
+                        if ~self.dobotStatus 
+                            self.dobotQMatrix = self.CalcJointStates(self.dobotModel,self.currentDobotGoal,self.steps,'quintic');
+                            dobotGoal = self.currentDobotGoal;
+                        else
+                            dobotGoal = self.nextDobotGoal;
+                            self.dobotQMatrix = self.CalcJointStates(self.dobotModel,self.nextDobotGoal,self.steps,'quintic');
                         end
+                        % check collisions and store updated trajectory
+                    end
+                    % Same as above for rebel
+                    if self.rebelGoalsCompleted < self.numFruits && self.dobotGoalsCompleted > 0
+                        self.currentRebelGoal = self.allFruits.startPoint{self.rebelGoalsCompleted+1};
+                        self.nextRebelGoal = self.allFruits.midPoint{self.rebelGoalsCompleted+1};
+                        if ~self.rebelStatus
+                            rebelGoal = self.currentRebelGoal;
+                            self.rebelQMatrix = self.CalcJointStates(self.rebelModel,self.currentRebelGoal,self.steps,'quintic');
+                        else
+                            rebelGoal = self.nextRebelGoal;
+                            self.rebelQMatrix = self.CalcJointStates(self.rebelModel,self.nextRebelGoal,self.steps,'quintic');
+                        end
+                        % check collisions and store updated trajectory
+                    end
+                    
+                    %% Moving robots by selected steps in trajectory - to give opportunity for e-stop/asynchronous safety test
+                    if self.dobotGoalsCompleted ~= self.numFruits
+                        self.MoveRobot('dobot',5);
+                        dobotReached = CheckGoalComplete(self.dobotModel,dobotGoal);
+                        if dobotReached
+                            self.dobotGoalsCompleted = self.dobotGoalsCompleted + 1;
+                            self.DropFruit(self.dobotGoalsCompleted);
+                        end
+                    end
+                    self.MoveRobot('rebel',5);
+                    rebelReached = CheckGoalComplete(self.rebelModel,rebelGoal);
+                    if rebelReached
+                        self.rebelGoalsCompleted = self.rebelGoalsCompleted + 1;
+                        self.DropFruit(self.rebelGoalsCompleted);
+                    end
+
+                    %% Checking if all goals completed and setting taskComplete if so
+                    if self.dobotGoalsCompleted == self.rebelGoalsCompleted ...
+                                    && self.numFruits == self.dobotGoalsCompleted
+                        self.taskComplete = true;
+                        break;
                     end
                 end
 
-                        %%ASYNCHRONUS STOP/COLLISION TESTING
-                        % using tic/tok - after certain random time
-                            % loadHuman within safety barriers %can comment in and out in demo 
-                            % loadObstacle between robots within robots workspace %can comment in and out in demo
-                        %%ASYNCHRONUS STOP/COLLISION TESTING
+            %% ASYNCHRONUS STOP/COLLISION TESTING
+                % using tic/tok - after certain random time
+                % loadHuman within safety barriers %can comment in and out in demo 
+                % loadObstacle between robots within robots workspace %can comment in and out in demo
             end
+            %% Deleting created files after task completion
             delete(strcat(self.dobotFilename,'.xls'));
             pause(1);
             delete(strcat(self.rebelFilename,'.xls'));
@@ -239,7 +278,7 @@ classdef A2Scaffold_psuedo < handle
         end
 
         %% Creates link ellipsoids for specified robot model and returns point cloud?
-        function  robotEllipsoids = CreateLinkEllipsoids(self, robotModel)
+        function  robotEllipsoids = CreateLinkEllipsoids(self, robotModel)      % ADD FUNCTIONALITY 
             
             centerPoint = [0,0,0];
             radii = [1,0.5,0.5];
@@ -256,13 +295,13 @@ classdef A2Scaffold_psuedo < handle
         end
         
         %% Checks if start/resume button has been pressed
-        function status = CheckStart(self) % ADD FUNCTIONALITY TO CHECK IF RESUME/START PRESSED
+        function status = CheckStart(self)                                      % ADD FUNCTIONALITY TO CHECK IF RESUME/START PRESSED
             input("Press enter to start. (Will be replaced by actual checking)");
             status = true;
         end
 
         %% Checks if hardware or GUI e-stop is pressed and returns true or false
-        function status = EStopPressed(self,press)
+        function status = EStopPressed(self,press)                          % ADD FUNCTIONALITY 
             status = press;
             if status
                 input("Stop?");
@@ -295,73 +334,87 @@ classdef A2Scaffold_psuedo < handle
             end
         end
 
-%% ==============TO BE MODIFIED FOR A2 STILL IF NEEDED==================
-        function qMatrix = CalcJointStates(self, endPos)
-            % disp("Entered endPos: ");
-            % disp(endPos);
-            
-            % get the current joint states of robot in workspace
-            currentPos = self.robotModel.getpos();
-            
-            % calculate the goal joint states based on required endPos and
-            % the current joint state for q0
-            % newQ = self.robotModel.ikine(endPos, 'q0', currentPos, 'mask', [1,1,0,0,0,0]);
-            newQ = self.robotModel.ikcon(endPos, currentPos);
-            
-            % use Quintic Polynomial method to generate and store our joint
-            % state waypoints over 100 steps
-            qMatrix = jtraj(currentPos, newQ, 100);
+        %% Calculates qMatrix of joint states for specified robot end effector postion and with specified interpolation method
+        function finalQMatrix = CalcJointStates(self,robotModel, endPos, steps, method)
+            currentQ = robotModel.getpos();                                      % get the current joint states of robot in figure
+            newQ = robotModel.ikcon(SE3(endPos), currentQ);        % calculate the goal joint states based on required endPos and the current joint state
+        
+            switch method
+                case 'trapezoidal'                                                          % trapezoidal velocity  - minimum time
+                    s = lspb(0,1,steps);                                                    % First, create the scalar function
+                    qMatrix = nan(steps,robotModel.n);                           % Create memory allocation for variables
+                    for i = 1:steps
+                        qMatrix(i,:) = (1-s(i))*currentQ + s(i)*newQ;           % Generate interpolated joint angles
+                    end
+                case 'quintic' % quintic polynomial - minimum jerk
+                    qMatrix = jtraj(currentQ,newQ,steps);
+     
+                case 'rmrc' % Resolved Motion Rate Control
+                    error("Needs to be done still");
+                otherwise
+                   error("Specify method of calculating joint state: (trapezoidal/minimum jerk/RMRC)")
+            end
+            finalQMatrix = qMatrix;
         end
 
-        function MoveRobot(self,endPos, status)
-            % calculate joint states from the desired end transform
-            qMatrix = self.CalcJointStates(endPos);
-
-            % display progress message showing which brick is being moved
-            disp("Brick Status: (0 is no brick being moved)");
-            disp(status);
-            % endPos;
+        %% 
+        function MoveRobot(self,robotName,deltaQ)
             
-            %for each joint state, animate it, get the resultant transform then check if brick should
-            % be moving too. If so, update brick mesh verties so location
-            % updated - latter not really working
-            for i =1:size(qMatrix,1)
-                self.robotModel.animate(qMatrix(i,:));
-                currentTr = self.robotModel.fkineUTS(qMatrix(i,:));
-                    switch status
-                        case 1-9 %brick moving too
-                            verticies = get(self.brick_h(status), 'Verticies');
-                            transformedVertices = [verticies, ones(size(verticies,1),1)] *currentTr;
-                            set(self.brick_h(status), 'Verticies', transformedVertices(:,1:3));
-                        otherwise
-                            %nothing - only move brick when it's been picked up
-                    end
-                % update figure
-                pause(0.01);
-                drawnow();
+            switch robotName
+                case 'dobot'
+                    % fruitNum = self.dobotGoalsCompleted+1;
+                    % currentFruit = allFruits.handle{fruitNum};
+                    assert(deltaQ<=length(self.dobotQMatrix),'deltaQ chosen is larger than number of steps in trajectory');
+                    self.dobotModel.animate(self.dobotQMatrix(1:deltaQ,:));
+                    %move fruit with end effector based on current fruit figure?
+                case 'rebel'
+                    % fruitNum = self.rebelGoalsCompleted+1;
+                    % currentFruit = allFruits.handle{fruitNum};
+                    self.rebelModel.animate(self.rebelQMatrix(1:deltaQ,:));
+                    %move fruit with end effector based on current fruit figure?
+                otherwise
+                    error('Invalid robot chosen. Specify (dobot/rebel)');
             end
-            % store final transform and compare to originally asked for position
-            % - only outputs when it isn't within tolerance
-            finalTr = currentTr;
-            if ~isempty(find(0.005 < finalTr-endPos,1))
-                warning('Desired EndEffector is different from calculated and animated endPos')
-                finalTr
-                endPos
-            end
+            
+            % %for each joint state, animate it, get the resultant transform then check if brick should
+            % % be moving too. If so, update brick mesh verties so location
+            % % updated - latter not really working
+            % for i =1:size(qMatrix,1)
+            %     self.robotModel.animate(qMatrix(i,:));
+            %     currentTr = self.robotModel.fkineUTS(qMatrix(i,:));
+            %         switch status
+            %             case 1-9 %brick moving too
+            %                 verticies = get(self.brick_h(status), 'Verticies');
+            %                 transformedVertices = [verticies, ones(size(verticies,1),1)] *currentTr;
+            %                 set(self.brick_h(status), 'Verticies', transformedVertices(:,1:3));
+            %             otherwise
+            %                 %nothing - only move brick when it's been picked up
+            %         end
+            %     % update figure
+            %     pause(0.01);
+            %     drawnow();
+            % end
         end
    
         %% Sets up the specified safety tests for simulated sensor input and upcoming collision
-        function status = safetyTest(self, type)
+        function status = safetyTest(self, type)                                % ADD FUNCTIONALITY 
             switch type
                 case {'sensor', 'Sensor'}
+                    % add simulated sensor readings to environment (like someone entered enclosure) 
+                    % and see if showing up as true i.e. unsafe to continue
                     status = true;
-                    % add simulated sensor readings to environment (like someone entered enclosure)
-                    % e-stop function when this occurs
+                    
+                    self.stopStatus = true;
+                    self.systemStatus = false;
                 case {'collision', 'Collision'}
                 otherwise
-                    disp('Invalid test. Specify type of test: sensor/collision');
-                    return;
+                    error('Invalid test. Specify type of test: (sensor/collision)');
             end
+        end
+
+       function DropFruit(self,fruitNum)
+            % add in gradual drop of fruit for better simulation (modify Z values in for loop?
+            disp("Fruit dropping yay.");
         end
     end
 
@@ -372,9 +425,6 @@ classdef A2Scaffold_psuedo < handle
             writematrix(qMatrix, newFilename);
         end
 
-        function dropFruit(fruit)
-            % add in gradual drop of fruit for better simulation (modify Z values in for loop?
-        end
         
         %% Calculate distance (dist) between consecutive points
         function dist=dist2pts(pt1,pt2)
@@ -398,11 +448,6 @@ classdef A2Scaffold_psuedo < handle
             end
         end
         
-        function PlaceSafety()
-            
-            
-        end
-        
         %% Plots a plane creates meshgrid of points on the plane - may be used for asynchronus safety
         function points = PlotPlane(axis,maxDim,gridInterval,planePoint)
             switch axis
@@ -416,9 +461,7 @@ classdef A2Scaffold_psuedo < handle
                     [X,Y] = meshgrid(-maxDim:gridInterval:maxDim,-maxDim:gridInterval:maxDim);
                     Z = repmat(planePoint,size(X,1),size(X,2));
                 otherwise
-                    disp('axis entered invalid. Specify X, Y, or Z')
-                    points = nan(1,3);
-                    return;
+                    error('Axis entered invalid. Specify X, Y, or Z');
             end
             points = [X(:),Y(:),Z(:)];
             surf(X,Y,Z);
@@ -458,9 +501,8 @@ classdef A2Scaffold_psuedo < handle
                     [X,Y,Z] = ellipsoid( center(1), center(2), center(3), radii(1), radii(2), radii(3));
 
                 otherwise
-                    disp('Specify shape of foreign object: (Sphere/Rectangle/Ellipsoid)');
-                    points = nan(1,3);
-                    return;
+                    error('Specify shape of foreign object: (Sphere/Rectangle/Ellipsoid)');
+                    
             end
 
             % Plot object
@@ -481,6 +523,7 @@ classdef A2Scaffold_psuedo < handle
         % https://au.mathworks.com/matlabcentral/answers/397810-creating-an-animated-video-by-rotating-a-surface-plot#answer_1532350
         % inputs - axis limits and zoom level for modifying current plot
         % view, final exported video quality and file name
+        % Example: self.CreateRotatedVideo([ -2.5, 2.5, -2.5, 2.5 ,0.01,2], 1.5, 95, 'rotated_video_environment');
         function CreateRotatedVideo(axisLim,zoomLvl,vidQuality,vidName)
             
             % update view of plot and use renderer for better image quality
