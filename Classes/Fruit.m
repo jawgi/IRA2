@@ -15,16 +15,17 @@ classdef Fruit < handle
         y;
         z;
         tag;
-    % end
-    % 
-    % properties (Access = protected)
+        pointCloud;
+        % end
+        %
+        % properties (Access = protected)
         types = ["Greengage","Apricot","Plum"];
         colourNames = ["Green","Orange","Purple"];
         green = [0 0.5 0];
         orange = [1 0.5 0];
         purple = [0.5 0 0.5];
         sizeOptions = ["s" "m" "l"];
-        greengageSize = [0.015 0.025; 0.025 0.04; 0.04 0.07]; % 2.5-4 cm standard size 
+        greengageSize = [0.015 0.025; 0.025 0.04; 0.04 0.07]; % 2.5-4 cm standard size
         apricotSize = [0.015 0.03; 0.03 0.05; 0.05 0.075]; % 3-5 cm standard size
         plumSize = [0.015 0.04; 0.04 0.065; 0.065 0.08]; % 4-7 cm standard
     end
@@ -48,10 +49,11 @@ classdef Fruit < handle
             self.dropPoint = cell(1,qty);
             self.x = zeros(1,qty);
             self.y = zeros(1,qty);
-            self.z = zeros(1,qty);
+            self.z = zeros(1,qty
+            self.pointCloud = cell(1,qty);
             self.plotFruit(qty);
         end
-        
+
         function delete(self)
             handles = findobj('Tag',self.tag);
 
@@ -90,22 +92,17 @@ classdef Fruit < handle
             end
             self.generateStartPoses(qty);
             for i=1:qty
-                radius = self.radius(i);
-                center = self.startPoint{i};
-                self.tag = self.type{i}+" "+i;
-        
-                % Create the sphere
-                [X, Y, Z] = sphere(30); % 30 specifies the resolution of the sphere
-        
-                % Scale and shift the sphere to the desired position and size
-                X = radius * X + center(1);
-                Y = radius * Y + center(2);
-                Z = radius * Z + center(3);
-        
-                % Plot the sphere
-                surf(X, Y, Z, 'FaceAlpha', 0.7, 'EdgeColor','none', 'FaceColor',self.colourCode{i},'Tag',self.tag);
-                
+                self.plotFruitPly(index);
             end
+        end
+
+        function plotFruitPly(self, index)
+            [faceData, vertexData] = plyread('sphere.ply', 'tri');
+            scaled = vertexData(:,1:3) * self.radius(index) * 0.1;
+            coordinates = [scaled, ones(size(scaled, 1), 1)]';
+            transformedCoordinates = (self.startPoint{index}.T * coordinates)';
+            self.pointCloud = transformedCoordinates;
+            trisurf(faceData,transformedCoordinates(:,1),transformedCoordinates(:,2),transformedCoordinates(:,3),'FaceColor', self.colourCode{index},'EdgeColor', 'none');
         end
 
         function radii = randomSize(self,index)
@@ -125,16 +122,16 @@ classdef Fruit < handle
             boxSize = {xLimit, yLimit, zLimit};
             minDist = max(self.radius)*2;
             for x = xLimit(1) : minDist : xLimit(2)
-                    for y = yLimit(1) : minDist : yLimit(2)
-                        for z = zLimit(1) : minDist : zLimit(2)
-                            positions = [positions; x y z];
-                        end
+                for y = yLimit(1) : minDist : yLimit(2)
+                    for z = zLimit(1) : minDist : zLimit(2)
+                        positions = [positions; x y z];
                     end
+                end
             end
 
             for i = 1:qty
                 fruitRadius = self.radius(i);
-                 %block out middle where robot is
+                %block out middle where robot is
                 isValidPosition = false;
                 while ~isValidPosition
                     % Generate a random pose within the paddock size
