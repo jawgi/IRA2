@@ -1,16 +1,5 @@
 classdef A2Scaffold_psuedo < handle
     properties (Constant)
-        dobotFruitGoal = [0.6,0,0.0;        0.6,0.17,0;         0.6,-0.17,0; ...
-                              0.6,0,0.03;       0.6,0.17,0.03;      0.6,-0.17,0.03; ...
-                              0.6,0,0.06;       0.6,0.17,0.06;      0.6,-0.17,0.06;];
-
-        rebelFruitPos = [0.6,0,0.0;        0.6,0.17,0;         0.6,-0.17,0; ...
-                              0.6,0,0.03;       0.6,0.17,0.03;      0.6,-0.17,0.03; ...
-                              0.6,0,0.06;       0.6,0.17,0.06;      0.6,-0.17,0.06;];
-
-        rebelFruitGoal = [0.6,0,0.0;        0.6,0.17,0;         0.6,-0.17,0; ...
-                              0.6,0,0.03;       0.6,0.17,0.03;      0.6,-0.17,0.03; ...
-                              0.6,0,0.06;       0.6,0.17,0.06;      0.6,-0.17,0.06;];
 
         dobotLinkDim = [ ];
         dobotFilename = 'dobot_qMatrix';
@@ -36,6 +25,8 @@ classdef A2Scaffold_psuedo < handle
         largeGreenGoalPos = [ -0.4, 0.85, 1.55 ];
         largeOrangeGoalPos = [ 0, 0.85, 1.55 ];
         largePurpleGoalPos = [ 0.4, 0.85, 1.55 ];
+
+        maxGoalDistError = 0.001;                   % Buffer specified between goalPos and robot end effector
     end
 
     properties
@@ -43,14 +34,15 @@ classdef A2Scaffold_psuedo < handle
         dobotBase;
         dobotEllipsoidPts;
         dobotQMatrix;
+        dobotGoalsCompleted;
 
         rebelModel;
         rebelBase;
         rebelEllipsoidPts;
         rebelQMatrix;
+        rebelGoalsCompleted;
         
-        testFruits;
-        dobotFruitPos;
+        allFruits;
 
         environmentCl;
         % handles
@@ -65,9 +57,8 @@ classdef A2Scaffold_psuedo < handle
         function self = A2Scaffold_psuedo() %figuring out general flow of code
             tic;
             count = 1;
-            %% Simulating the environment with robot models.
-            
-            self.SimulateEnvironment(false);
+            %% Simulating the environment with robot models and initialising variables
+            self.SimulateEnvironment(false);        
             
             self.dobotBase = SE3(0.4,-0.7,0.8).T;
             dobot = LinearUR3e(self.dobotBase);
@@ -84,21 +75,14 @@ classdef A2Scaffold_psuedo < handle
             % input("checked reach of rebel?");
 
             % self.CreateRotatedVideo([ -2.5, 2.5, -2.5, 2.5 ,0.01,2], 1.5, 95, 'rotated_video_environment');
-
-            %initialising fruit positions
-            % disp("These are fruit locations:");
-            self.dobotFruitPos = zeros(self.numFruits,3);
-            for i =1:self.numFruits
-                self.dobotFruitPos(i,:) = self.testFruits.startPoint{i};
-            end
-            % disp(self.dobotFruitPos);
             
             input("done loading environment?");
 
             self.taskComplete = false;
             self.systemStatus = false;
             self.stopStatus = false;
-
+            self.dobotGoalsCompleted = 0;
+            self.rebelGoalsCompleted = 0;
             while(~self.taskComplete)
                 if ~self.systemStatus                       % System on standby
                     if self.stopStatus                          % E-stop engaged
@@ -114,45 +98,40 @@ classdef A2Scaffold_psuedo < handle
                     end
                 else
                     input("Starting operation of robot.");
-                    count = count +1;       %hypothetical run
-                    if count > 3
-                        input("Finish?");
-                        self.taskComplete = true;
-                        break;
+                    
+                    if self.EStopPressed(true) || ~self.safetyTest('sensor')                % Check if hardware or GUI e-stop is pressed or sensor senses object in workspace (unsafe environment)
+                        self.stopStatus = true;                                                             % Change relevant variables to stop system operation
+                        self.systemStatus = false;
+                        self.SaveQMatrix(self.dobotQMatrix,self.dobotFilename);     % Save trajectories for both robots for restarting
+                        self.SaveQMatrix(self.rebelQMatrix,self.rebelFilename);
                     end
                     
-                    input("Stop?");
-                    self.stopStatus = true;
-                    self.systemStatus = false;
-                    
-                    % if eStop pressed || human detected within safety barriers
-                        % store current qMatrix for both robots into files (replace old ones)
-                        % stopStatus = true
-                        % systemStatus = standby
-                        % %break; %needed?
-                    % else
+
+
+                    % check if each robotGoalsCompleted complete and only continue if incomplete - 
+                    % so when dobot finished but rebel continues, dobot isn't being given any comands
+                    % store currentGoalQ for each robot - i.e. # of goals completed+1
+                    % create trajectory for each robot
+                        % check collisions and store updated trajectory
+                    % move robots by respective qMatrix - BUT ONLY THE FIRST VALUE OR FIRST 5 depending on how slow it is
+                        % ensure code is also moving faces of fruit
+                    % that way the robot doesn't complete entire trajectory without checking e-stop status or whatever
+                    % next - CheckGoalCompleted for each robot
+                        % if completed goal, then self.robotGoalsCompleted++
+                        % initiate DropFruit where it'll simulate fruit dropping naturally
+
+                    count = count +1;       %hypothetical run
+                    if count > 2
+                        input("Finish?");
+                        self.dobotGoalsCompleted = 9;
+                        self.rebelGoalsCompleted = 9;
+                        if self.dobotGoalsCompleted == self.rebelGoalsCompleted ...
+                                        && self.numFruits == self.dobotGoalsCompleted
+                            self.taskComplete = true;
+                            break;
+                        end
+                    end
                 end
-
-
-                        % if eStop pressed || human detected within safety barriers
-                            % store current qMatrix for both robots into files (replace old ones)
-                            % stopStatus = true
-                            % systemStatus = standby
-                        % else
-                            % check each robot taskcompletion i.e. dobotGoalsCompleted and rebelGoalsCompleted
-                            % store next q value for both robots (for loop?)
-                                % only store q values for rebel if dobotGoalsCompleted >0 and currently has one fruit in rebel container
-                            % check both robots for collisions in that q position
-    
-                            % if (~(dobotCollision || rebelCollision)) - none colliding
-                                % move both robots to stored q value
-                                % if current q value is also goal/final q value for both robots 
-                                    % update dobotGoalsCompleted and rebelGoalsCompleted
-                                    % if both of = 9 (or however many fruits)
-                                        % taskComplete = true (maybe vertex for each robot so [true,true] needed for task complete)
-                            % else (colliding)
-                                % find different q that doesn't collide and connects to next q
-                                % update qMatrix and add in to replace current q
 
                         %%ASYNCHRONUS STOP/COLLISION TESTING
                         % using tic/tok - after certain random time
@@ -164,11 +143,11 @@ classdef A2Scaffold_psuedo < handle
             pause(1);
             delete(strcat(self.rebelFilename,'.xls'));
             pause(1);
-            input("deleted previous files?");
             toc;
             % code for task completion status or at least time taken for entire task
         end
-
+        
+        %% Simulates entire environment except the robot models and stores initial locations of fruits
         function SimulateEnvironment(self, pointCloudOn)            
             %% Load floor
             floor = Environment("floor","floor");
@@ -207,7 +186,45 @@ classdef A2Scaffold_psuedo < handle
             self.environmentCl = environmentCl;
             
             % load fruits and store locations
-            self.testFruits = Fruit("manual",self.numFruits);
+            self.allFruits = Fruit("manual",self.numFruits);
+            
+            for i =1:self.numFruits
+                colour = self.allFruits.colourName{i};
+                size = self.allFruits.size{i};
+
+                switch colour
+                    case 'Green'
+                        self.allFruits.midPoint{i} = self.greenGoalPos;
+                        switch size
+                            case 's'
+                                self.allFruits.dropPoint{i} = self.smallGreenGoalPos;
+                            case 'm'
+                                self.allFruits.dropPoint{i} = self.mediumGreenGoalPos;
+                            case 'l'
+                                self.allFruits.dropPoint{i} = self.largeGreenGoalPos;
+                        end
+                    case 'Orange'
+                        self.allFruits.midPoint{i} = self.orangeGoalPos;
+                        switch size
+                            case 's'
+                                self.allFruits.dropPoint{i} = self.smallOrangeGoalPos;
+                            case 'm'
+                                self.allFruits.dropPoint{i} = self.mediumOrangeGoalPos;
+                            case 'l'
+                                self.allFruits.dropPoint{i} = self.largeOrangeGoalPos;
+                        end
+                    case 'Purple'
+                        self.allFruits.midPoint{i} = self.purpleGoalPos;
+                        switch size
+                            case 's'
+                                self.allFruits.dropPoint{i} = self.smallPurpleGoalPos;
+                            case 'm'
+                                self.allFruits.dropPoint{i} = self.mediumPurpleGoalPos;
+                            case 'l'
+                                self.allFruits.dropPoint{i} = self.largePurpleGoalPos;
+                        end
+                end
+            end
 
             % Populate additional safety features?
             self.PlaceSafety();
@@ -221,6 +238,7 @@ classdef A2Scaffold_psuedo < handle
             axis([ -1, 2.5, -2.5, 2.5 ,0.25,2]);
         end
 
+        %% Creates link ellipsoids for specified robot model and returns point cloud?
         function  robotEllipsoids = CreateLinkEllipsoids(self, robotModel)
             
             centerPoint = [0,0,0];
@@ -237,28 +255,47 @@ classdef A2Scaffold_psuedo < handle
             camlight
         end
         
+        %% Checks if start/resume button has been pressed
         function status = CheckStart(self) % ADD FUNCTIONALITY TO CHECK IF RESUME/START PRESSED
             input("Press enter to start. (Will be replaced by actual checking)");
             status = true;
         end
 
+        %% Checks if hardware or GUI e-stop is pressed and returns true or false
+        function status = EStopPressed(self,press)
+            status = press;
+            if status
+                input("Stop?");
+                disp("E-Stop Engaged! Stopping system operation.");
+            else
+                disp("E-Stop Disengaged. System operation can continue ...");
+            end
+        end
+
         %% % Load qMatrix files for both robot models if available (previously stopped) or create a file (first started)
         function qMatrix = LoadQMatrix(self,robotModel,filename)
-            filename = strcat(filename,'.xls'); % creates full filename
-            if isfile(filename)
+            newFilename = strcat(filename,'.xls'); % creates full filename
+            if isfile(newFilename)
                  % qMatrix = importdata(strcat(filename,'.mat'))
-                 qMatrix = readmatrix(filename); %stores previous qMatrix data into variable
+                 qMatrix = readmatrix(newFilename); %stores previous qMatrix data into variable
             else
                  qMatrix = robotModel.getpos();
                  self.SaveQMatrix(qMatrix,filename);
             end
         end
 
-        function SaveQMatrix(self,qMatrix,filename)
-            filename = strcat(filename); % creates full filename with xls to save qMatrix to spreadsheet
-            writematrix(qMatrix, filename); %
+        %% Checks if goal is reached by comparing current end effector position to goal within specified buffer
+        function reached = CheckGoalComplete(self,robotModel,goalPos)
+            currentEndEffectorTr = robotModel.fkine(robotModel.getpos()).T;
+            dist = self.dist2pts(goalPos,currentEndEffectorTr(1:3,4)');
+            if dist < self.maxGoalDistError
+                reached = true;
+            else
+                reached = false;
+            end
         end
 
+%% ==============TO BE MODIFIED FOR A2 STILL IF NEEDED==================
         function qMatrix = CalcJointStates(self, endPos)
             % disp("Entered endPos: ");
             % disp(endPos);
@@ -314,9 +351,10 @@ classdef A2Scaffold_psuedo < handle
         end
    
         %% Sets up the specified safety tests for simulated sensor input and upcoming collision
-        function self.safetyTest(self, type)
+        function status = safetyTest(self, type)
             switch type
                 case {'sensor', 'Sensor'}
+                    status = true;
                     % add simulated sensor readings to environment (like someone entered enclosure)
                     % e-stop function when this occurs
                 case {'collision', 'Collision'}
@@ -328,6 +366,11 @@ classdef A2Scaffold_psuedo < handle
     end
 
     methods(Static)
+
+        function SaveQMatrix(qMatrix,filename)
+            newFilename = strcat(filename, '.xls'); % creates full filename with xls to save qMatrix to spreadsheet
+            writematrix(qMatrix, newFilename);
+        end
 
         function dropFruit(fruit)
             % add in gradual drop of fruit for better simulation (modify Z values in for loop?
