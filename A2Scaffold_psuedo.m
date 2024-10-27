@@ -87,6 +87,9 @@ classdef A2Scaffold_psuedo < handle
 
             % self.CreateRotatedVideo([ -2.5, 2.5, -2.5, 2.5 ,0.01,2], 1.5, 95, 'rotated_video_environment');
             input("done loading environment?");
+            % handles = findobj
+            % input("check handles");
+
             animate = false;
             resetQ = [-0.1,zeros(1,6)];
             while(~self.taskComplete)
@@ -114,40 +117,40 @@ classdef A2Scaffold_psuedo < handle
                     % input("check");
 
                     dobotStartQ = self.CalcJointStates(self.dobotModel,fruitStartPt,self.steps,'quintic','other');
-                    self.MoveRobot('dobot',1,dobotStartQ,'basic',-1);
-                    disp(["Picked up fruit ", num2str(i), " from 1st Stage"]);
+                    self.MoveRobot('dobot',1,dobotStartQ,'basic',0,i);
+                    disp(['Picked up fruit ', num2str(i), ' from 1st Stage']);
                     % dobotResetQ = self.CalcJointStates(self.dobotModel,resetQ,self.steps,'quintic','basic');
                     % self.MoveRobot('dobot',10,dobotResetQ,'basic',-1);
                     % input("check");
 
                     dobotMidQ = self.CalcJointStates(self.dobotModel,fruitMidPt,self.steps,'quintic','other');
-                    self.MoveRobot('dobot',1,dobotMidQ,'basic',-1);
+                    self.MoveRobot('dobot',1,dobotMidQ,'basic',1,i);
                     % pause(2);
                     dobotResetQ = self.CalcJointStates(self.dobotModel,resetQ,self.steps,'quintic','basic');
-                    self.MoveRobot('dobot',5,dobotResetQ,'basic',-1);
-                    disp(["Dropped fruit ", num2str(i), " to 2nd Stage"]);
+                    self.MoveRobot('dobot',5,dobotResetQ,'basic',-1,i);
+                    disp(['Dropped fruit ', num2str(i), ' to 2nd Stage']);
                     % input("check");
 
                     rebelMidQ = self.CalcJointStates(self.rebelModel,fruitMidPt,self.steps,'quintic','other');
-                    self.MoveRobot('rebel',1,rebelMidQ,'basic',-1);
+                    self.MoveRobot('rebel',1,rebelMidQ,'basic',0,i);
                     % pause(2);
-                    disp(["Picked up fruit ", num2str(i), " from 2nd Stage"]);
+                    disp(['Picked up fruit ', num2str(i), ' from 2nd Stage']);
                     % rebelResetQ = self.CalcJointStates(self.dobotModel,resetQ,self.steps,'quintic','basic');
                     % self.MoveRobot('rebel',10,rebelResetQ,'basic',-1);
                     % input("check");
 
                     rebelDropQ = self.CalcJointStates(self.rebelModel,fruitDropPt,self.steps,'quintic','other');
-                    self.MoveRobot('rebel',1,rebelDropQ,'basic',-1);
+                    self.MoveRobot('rebel',1,rebelDropQ,'basic',1,i);
                     % pause(2);
                     rebelResetQ = self.CalcJointStates(self.rebelModel,resetQ,self.steps,'quintic','basic');
-                    self.MoveRobot('rebel',5,rebelResetQ,'basic',-1);
-                    disp(["Dropped fruit ", num2str(i), " to 3rd Stage"]);
+                    self.MoveRobot('rebel',5,rebelResetQ,'basic',-1,i);
+                    disp(['Dropped fruit ', num2str(i), ' to 3rd Stage']);
                     % input("check");
                 end
                 self.taskComplete = true;
                 disp("task is complete");
             end
-            error("Reached end")
+            error("Reached end.");
 
             self.taskComplete = false;                  % Initialise all variables
             self.systemStatus = false;
@@ -381,11 +384,11 @@ classdef A2Scaffold_psuedo < handle
             set(gcf, 'Windowstyle', 'docked');
             camlight();
             % optimalAzEl = [95.8730,17.8284];
-            optimalAzEl = [79,22];
+            optimalAzEl = [-104,22];
             % optimalAzEl = [-112,14];
             view(optimalAzEl);
-            zoom(0.5);
-            axis([ -0.1, 1.5, -2, 2 ,0.6,2]);
+            zoom(1);
+            axis([ -1, 2.5, -2, 2 ,0.25,2.25]);
         end
 
         %% Finds whether a point in matrix of desired positions for endEffector is reachable from start pose
@@ -406,18 +409,18 @@ classdef A2Scaffold_psuedo < handle
                         fruitPtCl = self.allFruits.pointCloud{i};
                         fruitPtCl = fruitPtCl(:,1:3);
                         ptEnd = fruitPtCl(end,:);
-                        Tr = self.allFruits.startPoint{i}.T
+                        Tr = self.allFruits.startPoint{i}.T;
                         interval = 100;
                         fruitPtCl = [fruitPtCl;Tr(1:3,4)'];
                         newPtEnd = fruitPtCl(end,:);
                         sizePC = length(fruitPtCl(:,1));
                     case 'mid'
-                        Tr = SE3(self.allFruits.midPoint{i}).T
+                        Tr = SE3(self.allFruits.midPoint{i}).T;
                         fruitPtCl = Tr(1:3,4)';
                         interval = 1;
                         sizePC = 1;
                     case 'drop'
-                        Tr = SE3(self.allFruits.dropPoint{i}).T
+                        Tr = SE3(self.allFruits.dropPoint{i}).T;
                         fruitPtCl = Tr(1:3,4)';
                         interval = 1;
                         sizePC = 1;
@@ -493,7 +496,7 @@ classdef A2Scaffold_psuedo < handle
                             if animateOn
                                 finalQ = robotModel.getpos();
                             else
-                                finalQ = Q
+                                finalQ = Q;
                             end
                             finalTr = robotModel.fkineUTS(finalQ);
                             % dist = self.dist2pts(finalTr(1:3,4)', self.allFruits.startPoint{i})
@@ -544,15 +547,15 @@ classdef A2Scaffold_psuedo < handle
 
                     if minDistPose{1,1} < self.maxGoalDistError
                         reachable(i) = true;
-                        poses(:,i) = {minDistPose{1,2}}
+                        poses(:,i) = {minDistPose{1,2}};
                         % disp(['reachable with endTr']);
                         % k
                         break;
                     end
                 end
 
-                minDistQ = minDistPose{1,2}
-                minDist = minDistPose{1,1}
+                minDistQ = minDistPose{1,2};
+                minDist = minDistPose{1,1};
                 if animateOn
                     robotModel.animate(q0);
                     input("ready to see minDist pose?");
@@ -561,7 +564,7 @@ classdef A2Scaffold_psuedo < handle
                     % input("check");
                 end
             end
-            reachable
+            reachable;
             verdict = {reachable,minDistQ};
         end
 
@@ -630,7 +633,7 @@ classdef A2Scaffold_psuedo < handle
                 newQ = endPos;
             else
                 endTr = SE3(endPos).T*trotx(pi);                                     %rotating by pi so can pick up from top
-                newQ = robotModel.ikcon(endTr, currentQ)                    % calculate the goal joint states based on required endPos and the current joint state
+                newQ = robotModel.ikcon(endTr, currentQ);                    % calculate the goal joint states based on required endPos and the current joint state
                 % robotModel.teach(newQ); % to check if it's actually near fruit
                 % input("done checking?");
             end
@@ -661,7 +664,7 @@ classdef A2Scaffold_psuedo < handle
         end
 
         %% 
-        function MoveRobot(self,robotName,deltaQ,qMatrix,mode,stage)
+        function MoveRobot(self,robotName,deltaQ,qMatrix,mode,stage,index)
 
             switch robotName
                 case 'dobot'
@@ -671,7 +674,7 @@ classdef A2Scaffold_psuedo < handle
                         % currentFruit = allFruits.handle{fruitNum};
                         assert(deltaQ<=length(newQMatrix),'deltaQ chosen is larger than number of steps in trajectory');
                         self.dobotModel.animate(newQMatrix(1:deltaQ,:));
-                        pause(0.01);
+                        pause(0.001);
                         %move fruit with end effector based on current fruit figure?
                     else
                         % newQMatrix = qMatrix;
@@ -679,23 +682,49 @@ classdef A2Scaffold_psuedo < handle
                             for i =1:deltaQ:size(qMatrix,1)
                                 try
                                     self.dobotModel.animate(qMatrix(i,:));
-                                    currentTr = self.dobotModel.fkineUTS(qMatrix(i,:));
+                                    % disp("animated successfully");
+                                    currentTr = self.dobotModel.fkineUTS(self.dobotModel.getpos());
                                         switch stage
                                             case 0 
                                                 %nothing - only move fruit when it's been picked up
                                             case 1
                                                 %fruit moving too
-                                                verticies = get(self.brick_h(status), 'Verticies');
-                                                transformedVertices = [verticies, ones(size(verticies,1),1)] *currentTr;
-                                                set(self.brick_h(status), 'Verticies', transformedVertices(:,1:3));
+                                                handles = findobj;
+                                                tag = self.allFruits.tag{index};
+                                                
+                                                handles = findobj('Tag',tag);
+                                                % input("check handles");
+                                                % Check if any handles were found
+                                                if ~isempty(handles)
+                                                    % disp(['Found ', num2str(length(handles)), ' object(s) with identifier: ', tag]);
+                                                    try 
+                                                        isvalid(handles); % Ensure the handle is valid
+                                                        delete(handles); % Safely attempt to delete the object
+                                                        % disp("Object deleted.");
+                                                        % input("check deleted");
+                                                    catch
+                                                        error("Couldn't delete object.")
+                                                    end
+                                                else
+                                                    error("Can't find handle.")
+                                                end
+                                                % disp("now creating new");
+                                                hold on;
+                                                % disp(['Index: ', num2str(index)]);
+                                                % disp(['Mode: moving']);
+                                                % disp('Current Transformation:');
+                                                % disp(currentTr);
+                                                % input("check");
+                                                self.allFruits.plotFruitPly(index,'moving',currentTr)
+                                                % input("check")
                                             otherwise
                                                 %nothing - only move fruit when it's been picked up
                                         end
                                     % update figure
-                                    pause(0.01);
+                                    pause(0.001);
                                     drawnow();
                                 catch
-                                    disp("pjoint error - skipping joint state");
+                                    error("pjoint error - skipping joint state");
                                 end
                             end
                         end
@@ -708,28 +737,57 @@ classdef A2Scaffold_psuedo < handle
                         % currentFruit = allFruits.handle{fruitNum};
                         assert(deltaQ<=length(newQMatrix),'deltaQ chosen is larger than number of steps in trajectory');
                         self.rebelModel.animate(newQMatrix(1:deltaQ,:));
-                        pause(0.01);
+                        pause(0.001);
                         %move fruit with end effector based on current fruit figure?
                     else
                         newQMatrix = qMatrix;
                         if strcmp(mode,'basic')
                             for i = 1:deltaQ:size(qMatrix,1)
-                                self.rebelModel.animate(qMatrix(i,:));
-                                currentTr = self.rebelModel.fkineUTS(qMatrix(i,:));
-                                    switch stage
-                                        case 0 
-                                            %nothing - only move fruit when it's been picked up
-                                        case 1
-                                            %fruit moving too
-                                            verticies = get(self.brick_h(status), 'Verticies');
-                                            transformedVertices = [verticies, ones(size(verticies,1),1)] *currentTr;
-                                            set(self.brick_h(status), 'Verticies', transformedVertices(:,1:3));
-                                        otherwise
-                                            %nothing - only move fruit when it's been picked up
-                                    end
-                                % update figure
-                                pause(0.01);
-                                drawnow();
+                                try
+                                    self.rebelModel.animate(qMatrix(i,:));
+                                    % disp("animated successfully");
+                                    currentTr = self.rebelModel.fkineUTS(self.rebelModel.getpos());
+                                        switch stage
+                                            case 0 
+                                                %nothing - only move fruit when it's been picked up
+                                            case 1
+                                                %fruit moving too
+                                                handles = findobj;
+                                                tag = self.allFruits.tag{index};
+                                                
+                                                handles = findobj('Tag',tag);
+                                                % input("check handles");
+                                                % Check if any handles were found
+                                                if ~isempty(handles)
+                                                    % disp(['Found ', num2str(length(handles)), ' object(s) with identifier: ', tag]);
+                                                    try isvalid(handles) % Ensure the handle is valid
+                                                        delete(handles); % Safely attempt to delete the object
+                                                        % disp("Object deleted.");
+                                                        % input("check deleted");
+                                                    catch
+                                                        error("Couldn't delete object.");
+                                                    end
+                                                else
+                                                    error("Can't find handle.");
+                                                end
+                                                % disp("now creating new");
+                                                hold on;
+                                                % disp(['Index: ', num2str(index)]);
+                                                % disp(['Mode: moving']);
+                                                % disp('Current Transformation:');
+                                                % disp(currentTr);
+                                                % input("check");
+                                                self.allFruits.plotFruitPly(index,'moving',currentTr);
+                                                % input("check")
+                                            otherwise
+                                                %nothing - only move fruit when it's been picked up
+                                        end
+                                    % update figure
+                                    pause(0.001);
+                                    drawnow();
+                                catch
+                                    error("pjoint error - skipping joint state");
+                                end
                             end
                         end
                     end

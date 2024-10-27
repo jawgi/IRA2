@@ -96,16 +96,37 @@ classdef Fruit < handle
             end
         end
 
-        function plotFruitPly(self, index)
-            [faceData, vertexData] = plyread('sphere.ply', 'tri');
-            scaled = vertexData(:,1:3) * self.radius(index) * 0.1;
-            coordinates = [scaled, ones(size(scaled, 1), 1)]';
-            transformedCoordinates = (self.startPoint{index}.T * coordinates)';
-            self.pointCloud{index} = transformedCoordinates;
-            self.tag{index} = self.type{index}+" "+index;
-            %disp(self.colourCode{index});
-            trisurf(faceData,transformedCoordinates(:,1),transformedCoordinates(:,2),transformedCoordinates(:,3), ...
-                'FaceColor', self.colourCode{index},'EdgeColor', 'none', 'Tag',self.tag{index});
+        function plotFruitPly(self, index, mode, transform)
+            % disp("Entered plotFruitPly");
+            % nargin
+            if nargin <3
+                [faceData, vertexData] = plyread('sphere.ply', 'tri');
+                scaled = vertexData(:,1:3) * self.radius(index) * 0.1;
+                coordinates = [scaled, ones(size(scaled, 1), 1)]';
+                transformedCoordinates = (self.startPoint{index}.T * coordinates)';
+                self.pointCloud{index} = transformedCoordinates;
+                self.tag{index} = self.type{index}+" "+index;
+                %disp(self.colourCode{index});
+                trisurf(faceData,transformedCoordinates(:,1),transformedCoordinates(:,2),transformedCoordinates(:,3), ...
+                    'FaceColor', self.colourCode{index},'EdgeColor', 'none', 'Tag',self.tag{index});
+            else
+                % disp("plotting new fruit at");
+                % transform
+                if strcmp(mode,'moving')
+                    % input("we are moving");
+                    [faceData, vertexData] = plyread('sphere.ply', 'tri');
+                    scaled = vertexData(:,1:3) * self.radius(index) * 0.1;
+                    coordinates = [scaled, ones(size(scaled, 1), 1)]';
+                    transformedCoordinates = (transform * coordinates)';
+                    self.pointCloud{index} = transformedCoordinates;
+                    self.tag{index} = self.type{index}+" "+index;
+                    %disp(self.colourCode{index});
+                    trisurf(faceData,transformedCoordinates(:,1),transformedCoordinates(:,2),transformedCoordinates(:,3), ...
+                        'FaceColor', self.colourCode{index},'EdgeColor', 'none', 'Tag',self.tag{index});
+                    % disp("plotted with trisurf");
+                end
+            end
+            % input("finished plotFruitPly");
         end
 
         function radii = randomSize(self,index)
