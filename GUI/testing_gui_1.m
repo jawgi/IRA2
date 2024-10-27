@@ -75,6 +75,8 @@ L4 = Link('d',0.093,'a',0,'alpha',-pi/2,'offset',-pi/2,'qlim',[deg2rad(-360),deg
 L5 = Link('d',0.093,'a',0,'alpha',-pi/2,'offset',0,'qlim',[deg2rad(-360),deg2rad(360)]);
 L6 = Link('d',0,'a',0,'alpha',0,'offset',0,'qlim',[deg2rad(-360),deg2rad(360)]);
 
+% can i push
+
 model = SerialLink([L1 L2 L3 L4 L5 L6],'name','UR5');
 
 for linkIndex = 0:model.n
