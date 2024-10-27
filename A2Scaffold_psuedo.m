@@ -9,7 +9,7 @@ classdef A2Scaffold_psuedo < handle
         defaultDeltaQ = 10;
         
         %% number of fruits chosen        
-        numFruits = 9;
+        numFruits = 3;
         
         %% Setting drop off points for each bucket 
         greenGoalPos = [ -0.45, -0.15, 0.9 ];
@@ -333,9 +333,10 @@ classdef A2Scaffold_psuedo < handle
             q0 = [-0.1 zeros(1,6)];
             M = [1 1 zeros(1,4)];
             for i=1:self.numFruits
-                fruitPos = self.allFruits.startPoint{i}
+                fruitTr = self.allFruits.startPoint{i}.T
                 currentQ = self.dobotModel.getpos();                                      % get the current joint states of robot in figure
-                endTr = SE3(fruitPos).T*trotx(pi) %rotating by pi so can pick up from top
+                % endTr = SE3(fruitPos).T*trotx(pi) %rotating by pi so can pick up from top
+                endTr = fruitTr*trotx(pi);
                 try
                     % Q = self.dobotModel.ikine(endTr,'q0', q0, 'mask', M, 'forceSoln');                    % Solve for joint angles
                     [Q,ERR,EXITFLAG]  = self.dobotModel.ikcon(endTr, currentQ);
@@ -347,10 +348,12 @@ classdef A2Scaffold_psuedo < handle
                     EXITFLAG
                 end
                 
-
                 self.dobotModel.animate(Q);
                 finalTr = self.dobotModel.fkineUTS(self.dobotModel.getpos())
-                dist = self.dist2pts(finalTr(1:3,4)', self.allFruits.startPoint{i})
+                % dist = self.dist2pts(finalTr(1:3,4)', self.allFruits.startPoint{i})
+                finalPoint = finalTr(1:3,4)'
+                fruitPoint = fruitTr(1:3,4)'
+                dist = self.dist2pts(finalPoint, fruitPoint)
                 input("next fruit?")
                 % input("check");
             end
