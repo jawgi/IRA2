@@ -9,7 +9,7 @@ classdef A2Scaffold_psuedo < handle
         defaultDeltaQ = 10;
         
         %% number of fruits chosen        
-        numFruits = 3;
+        numFruits = 12;
         
         %% Setting drop off points for each bucket 
         greenGoalPos = [ -0.45, -0.15, 0.9 ];
@@ -329,31 +329,79 @@ classdef A2Scaffold_psuedo < handle
         end
 
         function reachable = CheckReachable(self)
-            reachable = zeros(1,self.numFruits);
-            q0 = [-0.1 zeros(1,6)];
-            M = [1 1 zeros(1,4)];
+            reachable = ones(1,self.numFruits);
             for i=1:self.numFruits
+                dist = 1;
+                q0 = [-0.1 zeros(1,6)];
+                M = [1 1 zeros(1,4)];
+                attempt = 0;
                 fruitTr = self.allFruits.startPoint{i}.T
                 currentQ = self.dobotModel.getpos();                                      % get the current joint states of robot in figure
                 % endTr = SE3(fruitPos).T*trotx(pi) %rotating by pi so can pick up from top
                 endTr = fruitTr*trotx(pi);
-                try
-                    % Q = self.dobotModel.ikine(endTr,'q0', q0, 'mask', M, 'forceSoln');                    % Solve for joint angles
-                    [Q,ERR,EXITFLAG]  = self.dobotModel.ikcon(endTr, currentQ);
-                catch
-                    disp('Ikine failed to converge - defined pose not reachable by the manipulator')
-                    startPose = false;
-                    Q
-                    ERR
-                    EXITFLAG
+                while dist > self.maxGoalDistError
+                    attempt = attempt +1;
+                    if attempt > 3
+                        disp('Attempted 3 times - aborting.');
+                        reachable(i) = false;
+                        break;
+                    end
+                    try
+                        [Q1,ERR,EXITFLAG]  = self.dobotModel.ikcon(endTr, currentQ);
+                        Q2 = self.dobotModel.qmincon(Q1)
+                        pause(0.01);
+                        self.dobotModel.animate(Q2);
+                        try
+                            Q = self.dobotModel.ikine(endTr,'q0', Q2, 'mask', M);                    % Solve for joint angles
+                        catch
+                            disp("Disregard Ikine solution");
+                            Q = Q2;
+                        end
+                        Q
+                    catch
+                        disp('Ikine failed to converge - defined pose not reachable by the manipulator')
+                        startPose = false;
+                        % Q
+                        % ERR
+                        % EXITFLAG
+                    end
+                    
+                    self.dobotModel.animate(Q);
+                    finalTr = self.dobotModel.fkineUTS(self.dobotModel.getpos())
+                    % dist = self.dist2pts(finalTr(1:3,4)', self.allFruits.startPoint{i})
+                    finalPoint = finalTr(1:3,4)'
+                    fruitPoint = fruitTr(1:3,4)'
+                    dist = self.dist2pts(finalPoint, fruitPoint)
+                    
+                    %% RMRC attempt
+                    % input("now try RMRC");
+                    % M = [1 1 zeros(1,4)];                                                       % Masking Matrix
+                    % deltaT = 0.05;                                                              % Discrete time step
+                    % 
+                    % minManipMeasure = 0.1;
+                    % steps = 100;
+                    % deltaTheta = 2*pi/steps;
+                    % x = [];
+                    % 
+                    % T = eye(4);
+                    % 
+                    % m = zeros(1,self.steps);
+                    % error = nan(2,self.steps);
+                    % for i = 1:self.steps-1
+                    %     xdot = (x(:,i+1) - x(:,i))/deltaT;                                      % Calculate velocity at discrete time step
+                    %     J = p2.jacob0(qMatrix(i,:));                                            % Get the Jacobian at the current state
+                    %     J = J(1:2,:);                                                                   % Take only first 2 rows
+                    %     m(:,i)= sqrt(det(J*J'));                                                % Measure of Manipulability
+                    %     if m(:,i) < minManipMeasure
+                    %         qdot = inv(J'*J + 0.01*eye(2))*J'*xdot;
+                    %     else
+                    %         qdot = inv(J) * xdot;                                               % Solve velocitities via RMRC
+                    %     end
+                    %     error(:,i) = xdot - J*qdot;
+                    %     qMatrix(i+1,:) = qMatrix(i,:) + deltaT * qdot';                         % Update next joint state
+                    % end
+
                 end
-                
-                self.dobotModel.animate(Q);
-                finalTr = self.dobotModel.fkineUTS(self.dobotModel.getpos())
-                % dist = self.dist2pts(finalTr(1:3,4)', self.allFruits.startPoint{i})
-                finalPoint = finalTr(1:3,4)'
-                fruitPoint = fruitTr(1:3,4)'
-                dist = self.dist2pts(finalPoint, fruitPoint)
                 input("next fruit?")
                 % input("check");
             end
