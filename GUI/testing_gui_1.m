@@ -55,8 +55,13 @@ function testing_gui_1_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for testing_gui_1
 handles.output = hObject;
 
+% Create robot instance here 
+handles.dobot = LinearDobotMagician(); 
+handles.movementActive = false;  % Initialize movement state
+
 % Update handles structure
 guidata(hObject, handles);
+
 
 % This sets up the initial plot - only do when we are invisible
 % so window can get raised using untitledGUI.
@@ -68,19 +73,19 @@ end
 cla
 axes(handles.axes1);
 
-L1 = Link('d',0.0892,'a',0,'alpha',-pi/2,'offset',0,'qlim',[deg2rad(-360),deg2rad(360)]);
-L2 = Link('d',0.1357,'a',0.425,'alpha',-pi,'offset',-pi/2,'qlim',[deg2rad(-90),deg2rad(90)]);
-L3 = Link('d',0.1197,'a',0.39243,'alpha',pi,'offset',0,'qlim',[deg2rad(-170),deg2rad(170)]);
-L4 = Link('d',0.093,'a',0,'alpha',-pi/2,'offset',-pi/2,'qlim',[deg2rad(-360),deg2rad(360)]);
-L5 = Link('d',0.093,'a',0,'alpha',-pi/2,'offset',0,'qlim',[deg2rad(-360),deg2rad(360)]);
-L6 = Link('d',0,'a',0,'alpha',0,'offset',0,'qlim',[deg2rad(-360),deg2rad(360)]);
+L1 = Link('d', 0.103 + 0.0362, 'a', 0, 'alpha', -pi/2, 'offset', 0, 'qlim', [deg2rad(-135), deg2rad(135)]); 
+L2 = Link('d', 0, 'a', 0.135, 'alpha', 0, 'offset', -pi/2, 'qlim', [deg2rad(5), deg2rad(80)]);
+L3 = Link('d', 0, 'a', 0.147, 'alpha', 0, 'offset', 0, 'qlim', [deg2rad(-5), deg2rad(85)]);
+L4 = Link('d', 0, 'a', 0.06, 'alpha', pi/2, 'offset', -pi/2, 'qlim', [deg2rad(-180), deg2rad(180)]);
+L5 = Link('d', -0.05, 'a', 0, 'alpha', 0, 'offset', pi, 'qlim', [deg2rad(-85), deg2rad(85)]);
+L6 = Link('d', 0, 'a', 0, 'alpha', 0, 'offset', 0, 'qlim', [deg2rad(-360), deg2rad(360)]); 
 
 % can i push
 
-model = SerialLink([L1 L2 L3 L4 L5 L6],'name','UR5');
+model = SerialLink([L1 L2 L3 L4 L5 L6],'name','LinearDobotMagician');
 
 for linkIndex = 0:model.n
-    [ faceData, vertexData, plyData{linkIndex+1} ] = plyread(['UR5Link',num2str(linkIndex),'.ply'],'tri'); %#ok<AGROW>        
+    [ faceData, vertexData, plyData{linkIndex+1} ] = plyread(['LinearDobotMagicianLink',num2str(linkIndex),'.ply'],'tri'); %#ok<AGROW>        
     model.faces{linkIndex+1} = faceData;
     model.points{linkIndex+1} = vertexData;
 end
@@ -149,12 +154,24 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
 end
 
 
+
 % --- Executes on button press in estop_button.
 function estop_button_Callback(hObject, eventdata, handles)
 % hObject    handle to estop_button (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+    
+    % Define the dobot handle
+    handles.dobot = LinearDobotMagician();
 
+    % Update the structure
+    guidata(hObject, handles);
+
+    % Check if there's an ongoing movement
+    if isfield(handles, 'movementActive') && handles.movementActive
+        dobot.model.delay = 0;  % Stop any delays in the animation
+        disp('Emergency stop activated. Robot movement halted.');
+    end
 
 
 function edit1_Callback(hObject, eventdata, handles)
