@@ -328,8 +328,11 @@ classdef A2Scaffold_psuedo < handle
             axis([ -0.5, 1, -1.7, 0.5 ,0.8,1.5]);
         end
 
-        function reachable = CheckReachable(self)
+        %% Finds whether a point in matrix of desired positions for endEffector is reachable from start pose
+        %% Outputs whether reachable as well as 
+        function verdict = CheckReachable(self,startPose,desiredEndEffectorPos,animateOn)
             reachable = ones(1,self.numFruits);
+            poses = {zeros(1,6)};
             for i=1:self.numFruits
                 dist = 1;
                 q0 = [-0.1 zeros(1,6)];
@@ -446,6 +449,7 @@ classdef A2Scaffold_psuedo < handle
 
                     if minDistPose{1,1} < self.maxGoalDistError
                         reachable(i) = true;
+                        poses(:,i) = {minDistPose{1,2}}
                         % disp(['reachable with endTr']);
                         % k
                         break;
@@ -461,6 +465,7 @@ classdef A2Scaffold_psuedo < handle
                 % input("check");
             end
             reachable
+            verdict = {reachable,minDistQ};
         end
 
         %% Creates link ellipsoids for specified robot model and returns point cloud?
