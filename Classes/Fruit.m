@@ -96,9 +96,10 @@ classdef Fruit < handle
             end
         end
 
-        function plotFruitPly(self, index, mode, transform)
+        function plotted = plotFruitPly(self, index, mode, transform)
             % disp("Entered plotFruitPly");
             % nargin
+            plotted = false;
             if nargin <3
                 [faceData, vertexData] = plyread('sphere.ply', 'tri');
                 scaled = vertexData(:,1:3) * self.radius(index) * 0.1;
@@ -109,11 +110,9 @@ classdef Fruit < handle
                 %disp(self.colourCode{index});
                 trisurf(faceData,transformedCoordinates(:,1),transformedCoordinates(:,2),transformedCoordinates(:,3), ...
                     'FaceColor', self.colourCode{index},'EdgeColor', 'none', 'Tag',self.tag{index});
+                plotted = true;
             else
-                % disp("plotting new fruit at");
-                % transform
                 if strcmp(mode,'moving')
-                    % input("we are moving");
                     [faceData, vertexData] = plyread('sphere.ply', 'tri');
                     scaled = vertexData(:,1:3) * self.radius(index) * 0.1;
                     coordinates = [scaled, ones(size(scaled, 1), 1)]';
@@ -123,10 +122,9 @@ classdef Fruit < handle
                     %disp(self.colourCode{index});
                     trisurf(faceData,transformedCoordinates(:,1),transformedCoordinates(:,2),transformedCoordinates(:,3), ...
                         'FaceColor', self.colourCode{index},'EdgeColor', 'none', 'Tag',self.tag{index});
-                    % disp("plotted with trisurf");
+                    plotted = true;
                 end
             end
-            % input("finished plotFruitPly");
         end
 
         function radii = randomSize(self,index)
