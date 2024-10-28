@@ -31,4 +31,4 @@ camera = CameraObject();
 fruit = Fruit("manual",9);
 
 %% Dobot Magician 
-dobot = LinearDobotMagician();
+% dobot = LinearDobotMagician();
