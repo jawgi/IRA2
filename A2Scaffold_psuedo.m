@@ -94,7 +94,18 @@ classdef A2Scaffold_psuedo < handle
             resetQ = [-0.1,zeros(1,6)];
             while(~self.taskComplete)
                 
-                for i = 2:self.numFruits %skip green one since can't see easily
+                for i = 1:self.numFruits                
+                    
+                    if i == 2
+                        location = [-3,3,0];
+                        human = Human(location);            % replace with random time? or manual until demo day?
+                    end
+
+                    safeToOperate = self.SafetyTest('sensor')
+                    if ~safeToOperate
+                        error("Human detected within enclosure - system stopping until safe.");
+                    end
+                    input("check");
 
                     % dobotStartReachable = self.CheckReachable(self.dobotModel,'start',animate);
                     % dobotMidReachable = self.CheckReachable(self.dobotModel,'mid',animate);
@@ -784,17 +795,44 @@ classdef A2Scaffold_psuedo < handle
 
         end
    
-        %% Sets up the specified safety tests for simulated sensor input and upcoming collision
-        function status = safetyTest(self, type)                                % ADD FUNCTIONALITY 
+        %% Sets up the specified safety tests for simulated sensor input (someone entering enclosure) and upcoming collision
+        function status = SafetyTest(self, type)                                % ADD FUNCTIONALITY 
             switch type
                 case {'sensor', 'Sensor'}
-                    % add simulated sensor readings to environment (like someone entered enclosure) 
-                    % and see if showing up as true i.e. unsafe to continue
-                    status = true;
                     
+                    status = true;                          % Default to true until human sensed
                     self.stopStatus = false;
                     self.systemStatus = true;
+
+                    handle = findobj('Tag', 'human');
+                    if ~isempty(handle)
+                        status = false;                     % Unsafe until further checking of human location
+
+                        % Boundaries of enclosure
+                        minX = -1.9;
+                        maxX = 1.9;
+                        minY = -1.73;
+                        maxY = 1.22;
+                        
+                        % Get coordinates of human
+                        humanLocation = [mean(handle.XData(:)),mean(handle.YData(:)), mean(handle.ZData(:))];
+                        humanX = humanLocation(1);
+                        humanY = humanLocation(2);
+                        
+                        % Check if they are within enclosure
+                        withinEnclosure = (humanX >= minX) && (humanX <= maxX) && ...
+                                                     (humanY >= minY) && (humanY <= maxY);
+                        if ~withinEnclosure
+                            status = true;                      % Human is not in enclosure - safe again
+                            self.stopStatus = true;
+                            self.systemStatus = false;
+                        end
+                    end
+
                 case {'collision', 'Collision'}
+                    % Add foreign object/obstacle on table
+                    % Add new point cloud to environmentCl so it's taken
+                    % into consideration for collision checking
                 otherwise
                     error('Invalid test. Specify type of test: (sensor/collision)');
             end
