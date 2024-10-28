@@ -79,11 +79,8 @@ guidata(hObject, handles);
 % so window can get raised using untitledGUI.
 if strcmp(get(hObject,'Visible'),'off')
     plot(rand(5));
-end
+end 
 
-%plots the LinearDobotMagician 
-
-% cla
 axes(handles.axes1);
 
 % --- Create a function to set up the robot in the workspace
