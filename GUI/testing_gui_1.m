@@ -55,14 +55,7 @@ function testing_gui_1_OpeningFcn(hObject, eventdata, handles, varargin)
 % Default command line output for testing_gui_1
 handles.output = hObject;
 
-% Define the dobot handle
-handles.dobot = LinearDobotMagician();
-handles.movementActive = false;  % Initialize movement state
-
-% Update handles structure
-guidata(hObject, handles);
-
-% Initialize objects from the environment and save to handles
+% Initialise objects from the environment and save to handles
 handles.floor = Environment("floor", "floor");
 handles.table = Table();
 handles.buckets = Buckets();
@@ -71,21 +64,29 @@ handles.walls = Enclosure();
 handles.door = Door();
 handles.shoot = Shoot();
 
- % Initialize fruit plotting
+ % Initialise fruit plotting
 handles.fruit = Fruit("manual", 9);
+
+% Define the dobot handle
+handles.dobot = LinearDobotMagician();
+handles.movementActive = false;  % Initialise movement state
+
+% Update handles structure
+guidata(hObject, handles);
 
 
 % This sets up the initial plot - only do when we are invisible
 % so window can get raised using untitledGUI.
 if strcmp(get(hObject,'Visible'),'off')
     plot(rand(5));
-end
+end 
 
-%plots the LinearDobotMagician 
+axes(handles.axes1);
 
-% cla
-% axes(handles.axes1);
-% 
+% --- Create a function to set up the robot in the workspace
+function robotSetUp(hObject, handles)
+% hObject    handle to figure
+% handles    structure with handles and user data (see GUIDATA)
 L1 = Link('d', 0.103 + 0.0362, 'a', 0, 'alpha', -pi/2, 'offset', 0, 'qlim', [deg2rad(-135), deg2rad(135)]); 
 L2 = Link('d', 0, 'a', 0.135, 'alpha', 0, 'offset', -pi/2, 'qlim', [deg2rad(5), deg2rad(80)]);
 L3 = Link('d', 0, 'a', 0.147, 'alpha', 0, 'offset', 0, 'qlim', [deg2rad(-5), deg2rad(85)]);
@@ -93,42 +94,58 @@ L4 = Link('d', 0, 'a', 0.06, 'alpha', pi/2, 'offset', -pi/2, 'qlim', [deg2rad(-1
 L5 = Link('d', -0.05, 'a', 0, 'alpha', 0, 'offset', pi, 'qlim', [deg2rad(-85), deg2rad(85)]);
 L6 = Link('d', 0, 'a', 0, 'alpha', 0, 'offset', 0, 'qlim', [deg2rad(-360), deg2rad(360)]); 
 
-% can i push
+% SerialLink Model
+handles.model = SerialLink([L1 L2 L3 L4 L5 L6], 'name', 'LinearDobotMagician');
 
-model = SerialLink([L1 L2 L3 L4 L5 L6],'name','LinearDobotMagician');
-
-for linkIndex = 0:model.n
-    [ faceData, vertexData, plyData{linkIndex+1} ] = plyread(['LinearDobotMagicianLink',num2str(linkIndex),'.ply'],'tri'); %#ok<AGROW>        
-    model.faces{linkIndex+1} = faceData;
-    model.points{linkIndex+1} = vertexData;
+for linkIndex = 0:handles.model.n
+        [faceData, vertexData, plyData{linkIndex+1}] = plyread(['LinearDobotMagicianLink', num2str(linkIndex), '.ply'], 'tri'); %#ok<AGROW>        
+        handles.model.faces{linkIndex+1} = faceData;
+        handles.model.points{linkIndex+1} = vertexData;
 end
-% 
-% % Display robot
-% workspace = [-2 2 -2 2 -0.3 2];   
-% model.plot3d(zeros(1,model.n),'noarrow','workspace',workspace);
-% if isempty(findobj(get(gca,'Children'),'Type','Light'))
-%     camlight
-% end  
-% model.delay = 0;
+    
+% Display robot
+axes(handles.axes1);
+workspace = [-2 2 -2 2 -0.3 2];   
+handles.model.plot3d(zeros(1, handles.model.n),'noarrow','workspace',workspace);
+if isempty(findobj(get(gca,'Children'),'Type','Light'))
+    camlight
+end  
+handles.model.delay = 0;
 
-% % Try to correctly colour the arm (if colours are in ply file data)
-% for linkIndex = 0:model.n
-%     handles = findobj('Tag', model.name);
-%     h = get(handles,'UserData');
-%     try 
-%         h.link(linkIndex+1).Children.FaceVertexCData = [plyData{linkIndex+1}.vertex.red ...
-%                                                       , plyData{linkIndex+1}.vertex.green ...
-%                                                       , plyData{linkIndex+1}.vertex.blue]/255;
-%         h.link(linkIndex+1).Children.FaceColor = 'interp';
-%     catch ME_1
-%         disp(ME_1);
-%         continue;
-%     end
-% end
+% Try to correctly colour the arm (if colours are in ply file data)
+for linkIndex = 0:handles.model.n
+    handles = findobj('Tag', handles.model.name);
+    h = get(handles,'UserData');
+    try 
+        h.link(linkIndex+1).Children.FaceVertexCData = [plyData{linkIndex+1}.vertex.red ...
+                                                      , plyData{linkIndex+1}.vertex.green ...
+                                                      , plyData{linkIndex+1}.vertex.blue]/255;
+        h.link(linkIndex+1).Children.FaceColor = 'interp';
+    catch ME_1
+        disp(ME_1);
+        continue;
+    end
+end
 
-% data = guidata(hObject);
-% data.model = model;
-% guidata(hObject,data);
+robotSetUp(handles);
+guidata(hObject,handles);
+
+
+% --- Define the function which sets up the robot in the environment 
+function robotObjectSetUp(handles)
+handles.floor.plot([0, 0, -0.3]); 
+handles.table.plot([0.5, 0, -0.2]);
+handles.buckets.plot([0.5, 0, -0.2]);
+handles.sortedBuckets.plot([0.5, 0, -0.2]);
+handles.walls([0.5, 0, -0.2]);
+handles.door([0.5, 0, -0.2]);
+handles.shoot([0.5, 0, -0.2]);
+handles.dobot([1, 0, -0.2]);
+
+data = guidata(hObject);
+data.handles.model = model;
+guidata(hObject,data);
+
 
 % UIWAIT makes testing_gui_1 wait for user response (see UIRESUME)
 % uiwait(handles.figure1);

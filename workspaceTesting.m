@@ -29,3 +29,6 @@ camera = CameraObject();
 
 %% Fruit plotting
 fruit = Fruit("manual",9);
+
+%% Dobot Magician 
+% dobot = LinearDobotMagician();
