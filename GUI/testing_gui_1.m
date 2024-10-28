@@ -69,7 +69,8 @@ if strcmp(get(hObject,'Visible'),'off')
     plot(rand(5));
 end
 
-%plots UR5
+%plots the robot
+
 cla
 axes(handles.axes1);
 
