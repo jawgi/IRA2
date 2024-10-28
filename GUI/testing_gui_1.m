@@ -52,15 +52,27 @@ function testing_gui_1_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to testing_gui_1 (see VARARGIN)
 
-% Choose default command line output for testing_gui_1
+% Default command line output for testing_gui_1
 handles.output = hObject;
 
-% Create robot instance here 
-handles.dobot = LinearDobotMagician(); 
+% Define the dobot handle
+handles.dobot = LinearDobotMagician();
 handles.movementActive = false;  % Initialize movement state
 
 % Update handles structure
 guidata(hObject, handles);
+
+% Initialize objects from the environment and save to handles
+handles.floor = Environment("floor", "floor");
+handles.table = Table();
+handles.buckets = Buckets();
+handles.sortedBuckets = SortedBuckets();
+handles.walls = Enclosure();
+handles.door = Door();
+handles.shoot = Shoot();
+
+ % Initialize fruit plotting
+handles.fruit = Fruit("manual", 9);
 
 
 % This sets up the initial plot - only do when we are invisible
@@ -69,32 +81,11 @@ if strcmp(get(hObject,'Visible'),'off')
     plot(rand(5));
 end
 
-function testingGUI_OpeningFcn(hObject, eventdata, handles, varargin)
-    % Choose default command line output for GUI
-    handles.output = hObject;
-
-    % Initialize objects from the environment and save to handles
-    handles.floor = Environment("floor", "floor");
-    handles.table = Table();
-    handles.buckets = Buckets();
-    handles.sortedBuckets = SortedBuckets();
-    handles.walls = Enclosure();
-    handles.door = Door();
-    handles.shoot = Shoot();
-
-     % Initialize fruit plotting
-    handles.fruit = Fruit("manual", 9);
-
-    % Create robot instance
-    handles.dobot = LinearDobotMagician(); 
-    handles.movementActive = false;  % Initialize movement state
-    
-
 %plots the LinearDobotMagician 
 
-cla
-axes(handles.axes1);
-
+% cla
+% axes(handles.axes1);
+% 
 L1 = Link('d', 0.103 + 0.0362, 'a', 0, 'alpha', -pi/2, 'offset', 0, 'qlim', [deg2rad(-135), deg2rad(135)]); 
 L2 = Link('d', 0, 'a', 0.135, 'alpha', 0, 'offset', -pi/2, 'qlim', [deg2rad(5), deg2rad(80)]);
 L3 = Link('d', 0, 'a', 0.147, 'alpha', 0, 'offset', 0, 'qlim', [deg2rad(-5), deg2rad(85)]);
@@ -111,33 +102,33 @@ for linkIndex = 0:model.n
     model.faces{linkIndex+1} = faceData;
     model.points{linkIndex+1} = vertexData;
 end
+% 
+% % Display robot
+% workspace = [-2 2 -2 2 -0.3 2];   
+% model.plot3d(zeros(1,model.n),'noarrow','workspace',workspace);
+% if isempty(findobj(get(gca,'Children'),'Type','Light'))
+%     camlight
+% end  
+% model.delay = 0;
 
-% Display robot
-workspace = [-2 2 -2 2 -0.3 2];   
-model.plot3d(zeros(1,model.n),'noarrow','workspace',workspace);
-if isempty(findobj(get(gca,'Children'),'Type','Light'))
-    camlight
-end  
-model.delay = 0;
+% % Try to correctly colour the arm (if colours are in ply file data)
+% for linkIndex = 0:model.n
+%     handles = findobj('Tag', model.name);
+%     h = get(handles,'UserData');
+%     try 
+%         h.link(linkIndex+1).Children.FaceVertexCData = [plyData{linkIndex+1}.vertex.red ...
+%                                                       , plyData{linkIndex+1}.vertex.green ...
+%                                                       , plyData{linkIndex+1}.vertex.blue]/255;
+%         h.link(linkIndex+1).Children.FaceColor = 'interp';
+%     catch ME_1
+%         disp(ME_1);
+%         continue;
+%     end
+% end
 
-% Try to correctly colour the arm (if colours are in ply file data)
-for linkIndex = 0:model.n
-    handles = findobj('Tag', model.name);
-    h = get(handles,'UserData');
-    try 
-        h.link(linkIndex+1).Children.FaceVertexCData = [plyData{linkIndex+1}.vertex.red ...
-                                                      , plyData{linkIndex+1}.vertex.green ...
-                                                      , plyData{linkIndex+1}.vertex.blue]/255;
-        h.link(linkIndex+1).Children.FaceColor = 'interp';
-    catch ME_1
-        disp(ME_1);
-        continue;
-    end
-end
-
-data = guidata(hObject);
-data.model = model;
-guidata(hObject,data);
+% data = guidata(hObject);
+% data.model = model;
+% guidata(hObject,data);
 
 % UIWAIT makes testing_gui_1 wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
@@ -182,9 +173,6 @@ function estop_button_Callback(hObject, eventdata, handles)
 % hObject    handle to estop_button (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-    
-    % Define the dobot handle
-    handles.dobot = LinearDobotMagician();
 
     % Update the structure
     guidata(hObject, handles);
