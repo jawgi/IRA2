@@ -88,6 +88,19 @@ classdef A2Scaffold_psuedo < handle
             % self.CreateRotatedVideo([ -2.5, 2.5, -2.5, 2.5 ,0.01,2], 1.5, 95, 'rotated_video_environment');
 
             input("done loading environment?");
+
+            for i = 1:self.numFruits
+                fruitSurfacePts = self.FruitPointCloud(i,100);
+                animateOn = false;
+                reachablePose = CheckReachable(self,self.dobotModel,fruitSurfacePts,animateOn)
+                reachable = reachablePose{1};
+                optimalQ = reachablePose{2};
+                errorDistance = reachablePose{3};
+                
+                self.dobotModel.animate(optimalQ);
+                drawnow();
+                input("check optimal Q?");
+            end
             
             % handles = findobj
             % input("check handles");
@@ -413,184 +426,113 @@ classdef A2Scaffold_psuedo < handle
             zoom(1);
             axis([ -1, 2.5, -2, 2 ,0.25,2.25]);
         end
-
-        %% Finds whether a point in matrix of desired positions for endEffector is reachable from start pose
-        %% Outputs whether reachable as well as the poses associated with end effector closest distance to goal
-        function verdict = CheckReachable(self,robotModel,stage,animateOn)
-            reachable = ones(1,self.numFruits);
-            poses = {zeros(1,6)};
-            for i=1:self.numFruits
-                dist = 1;
-                q0 = [-0.1 zeros(1,6)];
-                M = [1 1 zeros(1,4)];
-                attempt = 0;
-                minDistPose = {dist,q0};
-
-                switch stage
-                    case 'start'
-                        % fruitTr = self.allFruits.startPoint{i}.T
-                        fruitPtCl = self.allFruits.pointCloud{i};
-                        fruitPtCl = fruitPtCl(:,1:3);
-                        ptEnd = fruitPtCl(end,:);
-                        Tr = self.allFruits.startPoint{i}.T;
-                        interval = 100;
-                        fruitPtCl = [fruitPtCl;Tr(1:3,4)'];
-                        newPtEnd = fruitPtCl(end,:);
-                        sizePC = length(fruitPtCl(:,1));
-                    case 'mid'
-                        Tr = SE3(self.allFruits.midPoint{i}).T;
-                        fruitPtCl = Tr(1:3,4)';
-                        interval = 1;
-                        sizePC = 1;
-                    case 'drop'
-                        Tr = SE3(self.allFruits.dropPoint{i}).T;
-                        fruitPtCl = Tr(1:3,4)';
-                        interval = 1;
-                        sizePC = 1;
-                    otherwise
-                        error("Specify fruit stage: (start,mid,drop)");
-                end
-                disp(['Stage: ', stage])
-                input("check");
-                
-                for j = 1:interval:sizePC
-                    fruitTr = SE3(fruitPtCl(j,:)).T;
-                    currentQ = robotModel.getpos();                                      % get the current joint states of robot in figure
-                    % endTr = SE3(fruitPos).T*trotx(pi) %rotating by pi so can pick up from top
-                    
-                    if strcmp(stage,'start')
-                        endTr = {fruitTr*trotx(pi);fruitTr*troty(pi);fruitTr*trotz(pi)};
-                    else
-                        endTr = {fruitTr*trotx(pi)};
-                    end
-
-                    % input("check");
-                    for k = 1:length(endTr)
-                        attempt = 0;
-                        while dist > self.maxGoalDistError
-                            attempt = attempt +1;
-                            if attempt > 1
-                                % disp('Attempted 1 times - aborting.');
-                                reachable(i) = false;
-                                break;
-                            end
-
-                            try
-                                Q1  = robotModel.ikcon(endTr{k}, currentQ);
-                                Q2 = robotModel.qmincon(Q1);
-                                pause(0.001);
-                                if animateOn
-                                    robotModel.animate(Q2);
-                                end
-                                Q = Q2;
-                                try
-                                    warning off
-                                    Q = robotModel.ikine(endTr{k},'q0', Q2, 'mask', M);                    % Solve for joint angles
-                                    warning on
-                                catch
-                                    disp("Disregard Ikine solution");
-                                    Q = Q2;
-                                end
-                                Q;
-                            catch
-                                disp('Ikcon failed to converge - defined pose not reachable by the manipulator')
-                                startPose = false;
-                                % Q
-                                % ERR
-                                % EXITFLAG
-                            end
-
-                            try
-                                if animateOn
-                                    warning off
-                                    robotModel.animate(Q);
-                                    warning on
-                                end
-                            catch
-                                disp("ikine Q didn't work - sticking with Q2");
-                                % error("ikine Q didn't work - sticking with Q2");
-                                if animateOn
-                                    warning off
-                                    robotModel.animate(Q2);
-                                    warning on
-                                end
-                            end
-
-                            if animateOn
-                                finalQ = robotModel.getpos();
-                            else
-                                finalQ = Q;
-                            end
-                            finalTr = robotModel.fkineUTS(finalQ);
-                            % dist = self.dist2pts(finalTr(1:3,4)', self.allFruits.startPoint{i})
-                            finalPoint = finalTr(1:3,4)';
-                            fruitPoint = fruitTr(1:3,4)';
-                            dist = self.dist2pts(finalPoint, fruitPoint);
-
-                            %% RMRC attempt
-                            % input("now try RMRC");
-                        % M = [1 1 zeros(1,4)];                                                       % Masking Matrix
-                        % deltaT = 0.05;                                                              % Discrete time step
-                        % 
-                        % minManipMeasure = 0.1;
-                        % steps = 100;
-                        % deltaTheta = 2*pi/steps;
-                        % x = [];
-                        % 
-                        % T = eye(4);
-                        % 
-                        % m = zeros(1,self.steps);
-                        % error = nan(2,self.steps);
-                        % for i = 1:self.steps-1
-                        %     xdot = (x(:,i+1) - x(:,i))/deltaT;                                      % Calculate velocity at discrete time step
-                        %     J = p2.jacob0(qMatrix(i,:));                                            % Get the Jacobian at the current state
-                        %     J = J(1:2,:);                                                                   % Take only first 2 rows
-                        %     m(:,i)= sqrt(det(J*J'));                                                % Measure of Manipulability
-                        %     if m(:,i) < minManipMeasure
-                        %         qdot = inv(J'*J + 0.01*eye(2))*J'*xdot;
-                        %     else
-                        %         qdot = inv(J) * xdot;                                               % Solve velocitities via RMRC
-                        %     end
-                        %     error(:,i) = xdot - J*qdot;
-                        %     qMatrix(i+1,:) = qMatrix(i,:) + deltaT * qdot';                         % Update next joint state
-                        % end
     
+        %% Outputs start point cloud for specified fruit at a sample size
+        function fruitPtCl = FruitPointCloud(self, index, sampleQty)
+            fruitIndex = index;
+
+            surfacePtCl = self.allFruits.pointCloud{fruitIndex};
+            ptEnd = surfacePtCl(end,:);
+            sizePtCl = length(surfacePtCl);
+            fruitPtCl = surfacePtCl(1,:);
+
+            interval = int32(sizePtCl/sampleQty);                   % Making iterator interval positive int
+
+            for i = 2:interval:sizePtCl
+                fruitPtCl = [fruitPtCl;surfacePtCl(i,:)];
+            end
+
+            fruitStartTr = self.allFruits.startPoint{fruitIndex}.T;
+            fruitPtCl = [fruitPtCl;fruitStartTr(1:3,4)'];
+            newPtEnd = fruitPtCl(end,:);
+
+            sizeFinalPtCl = length(fruitPtCl);
+        end
+        
+        %% Outputs whether point/s reachable as well as the poses associated with end effector closest distance to goal
+        function reachablePoses = CheckReachable(self,robotModel,points,animateOn)
+            numPoints = length(points);
+            reachable = 0;
+            optimalQ = zeros(1,7);
+            
+            errorDistance = 1;              % Default to large quantity
+            q0 = [-0.1 zeros(1,6)];        % Default reset join state - for animating.
+            minDistPose = {errorDistance,optimalQ};
+
+            for i = 1:numPoints
+                checkPt = points(i,:);
+                pointTr = SE3(checkPt).T;
+                if animateOn                            %Reset position of the robot from last attempt
+                    warning off
+                    robotModel.animate(q0);
+                    drawnow();
+                    pause(0.001);
+                    warning on
+                end
+                currentQ = robotModel.getpos();
+                % endPtTr = {pointTr*trotx(pi);pointTr*troty(pi);pointTr*trotz(pi)};
+                endPtTr = {pointTr*trotx(pi)};
+                maxAttempt = length(endPtTr);
+                % input("check");
+                
+                attempt = 0;
+                while errorDistance > self.maxGoalDistError && attempt < maxAttempt
+                    attempt = attempt + 1;
+                    attemptTr = endPtTr{attempt};
+
+                    try
+                        [Q1,ERR1] = robotModel.ikcon(attemptTr, currentQ);
+                        [Q2,ERR2] = robotModel.qmincon(Q1);
+
+                        Q1Tr =  robotModel.fkineUTS(Q1);
+                        distQ1 = self.dist2pts(Q1Tr(1:3,4)',checkPt);
+                        Q2Tr = robotModel.fkineUTS(Q2);
+                        distQ2 = self.dist2pts(Q2Tr(1:3,4)',checkPt);
+
+                        if distQ2 > distQ1                  %i.e. qmincon didn't help for lower error
+                            finalQ = Q1;
+                        else
+                            finalQ = Q2;
                         end
-                        minDist = minDistPose{1,1};
-                        minDistQ = minDistPose{1,2};
-                        if dist < minDist
-                            % disp(['smaller dist ', num2str(dist), ' - storing new values']);
-                            minDistPose{1,1} = dist;
-                            minDistPose{1,2} = finalQ;
-                            finalQ;
-                            % minDistPose
-                        end
-                        % input("check");
+                    catch
+                        disp('Ikcon failed to converge - defined pose not reachable by the manipulator');
+                        finalQ = Q1;
+                        disp(Q1);
+                        disp(distQ1);
                     end
 
-                    if minDistPose{1,1} < self.maxGoalDistError
-                        reachable(i) = true;
-                        poses(:,i) = {minDistPose{1,2}};
-                        % disp(['reachable with endTr']);
-                        % k
-                        break;
+                    if animateOn
+                        warning off
+                        robotModel.animate(q0);
+                        drawnow();
+                        pause(0.001);
+                        robotModel.animate(finalQ);
+                        drawnow();
+                        warning on
                     end
+                    finalTr = robotModel.fkineUTS(finalQ);
+                    finalPoint = finalTr(1:3,4)';
+                    errorDistance = self.dist2pts(finalPoint, checkPt);
+
+                    minDist = minDistPose{1,1};                                             %store previous values before comparing currently found distance
+                    if errorDistance < minDist                                                  %To find lowest from the 3 attempts
+                        % disp(['smaller dist ', num2str(dist), ' - storing new values']);
+                        minDistPose{1,1} = errorDistance;
+                        minDistPose{1,2} = finalQ;
+                    end
+                    % input("check attempt");
                 end
 
-                minDistQ = minDistPose{1,2};
-                minDist = minDistPose{1,1};
-                if animateOn
-                    robotModel.animate(q0);
-                    input("ready to see minDist pose?");
-                    robotModel.animate(minDistQ);
-                    input("next fruit?");
-                    % input("check");
+                errorDistance = minDistPose{1,1};
+                optimalQ = minDistPose{1,2};
+                if errorDistance < self.maxGoalDistError;
+                    reachable = true;
+                    break;                                                      % Stop for-loop and move on - we got best pose
                 end
             end
-            reachable;
-            verdict = {reachable,minDistQ};
+            reachablePoses = {reachable,optimalQ,errorDistance};
         end
-
+        
         %% Creates link ellipsoids for specified robot model and returns point cloud?
         function  robotEllipsoids = CreateLinkEllipsoids(self, robotModel)      % ADD FUNCTIONALITY 
             
