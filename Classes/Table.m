@@ -6,7 +6,7 @@ classdef Table < LoadObjectSTL
         scaleZ = 1.0;
         transformation = SE3(0,0,0);
         faceColour = [0.6 0.3 0];
-        edgeColour = [0.65 0.35 0.05];
+        edgeColour = '#663300';
         identifier = "table2";
     end
     
