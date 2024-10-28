@@ -1,0 +1,4 @@
+# Ignoring animation and large files to speed up pull and push
+Animations/
+Camera/
+Workspace CAD Files/
