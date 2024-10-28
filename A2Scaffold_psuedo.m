@@ -86,7 +86,9 @@ classdef A2Scaffold_psuedo < handle
             % input("checked reach of rebel?");
 
             % self.CreateRotatedVideo([ -2.5, 2.5, -2.5, 2.5 ,0.01,2], 1.5, 95, 'rotated_video_environment');
+
             input("done loading environment?");
+            
             % handles = findobj
             % input("check handles");
 
@@ -96,14 +98,22 @@ classdef A2Scaffold_psuedo < handle
                 
                 for i = 1:self.numFruits                
                     
-                    if i == 2
+                    if i == 1
                         location = [-3,3,0];
-                        human = Human(location);            % replace with random time? or manual until demo day?
+                        human = Human();            % replace with random time? or manual after # of fruit until demo day?
                     end
-
+                    
+                    disp("Testing simulated sensor input - i.e. human in enclosure:");
                     safeToOperate = self.SafetyTest('sensor')
                     if ~safeToOperate
-                        error("Human detected within enclosure - system stopping until safe.");
+                        error("Human detected within enclosure - stopping until safe to continue...");
+                    end
+                    input("check");
+
+                    disp("Testing forced simulated upcoming collision");
+                    safeToOperate = self.SafetyTest('collision')
+                    if ~safeToOperate
+                        error("System is colliding with object - stopping until safe to conitinue...");
                     end
                     input("check");
 
@@ -796,11 +806,11 @@ classdef A2Scaffold_psuedo < handle
         end
    
         %% Sets up the specified safety tests for simulated sensor input (someone entering enclosure) and upcoming collision
-        function status = SafetyTest(self, type)                                % ADD FUNCTIONALITY 
+        function status = SafetyTest(self, type)       
+            status = true;                          % Default to true until human sensed or colliding with foreign object
             switch type
                 case {'sensor', 'Sensor'}
                     
-                    status = true;                          % Default to true until human sensed
                     self.stopStatus = false;
                     self.systemStatus = true;
 
@@ -830,9 +840,21 @@ classdef A2Scaffold_psuedo < handle
                     end
 
                 case {'collision', 'Collision'}
-                    % Add foreign object/obstacle on table
-                    % Add new point cloud to environmentCl so it's taken
-                    % into consideration for collision checking
+                    shape = 'rectangle';
+                    position = [0.25,-0.4,1.4];
+                    sides = [0.1, 0.1,1];
+
+                    foreignObjPts = A2Scaffold_psuedo.PlotForeignObject(shape,position,'b',sides(1),sides(2),sides(3)); % Plot foreign object within workspace
+                    self.PlotPointCloud(foreignObjPts,'r','.');                         % Plot points for visability
+
+                    % Add to environment point cloud to take into consideration for collision checking
+                    self.environmentCl = [self.environmentCl;foreignObjPts];
+
+                    if self.InCollision()                        % Placeholder function until collision checking completed
+                        status = false;
+                        self.stopStatus = true;
+                        self.systemStatus = false;
+                    end
                 otherwise
                     error('Invalid test. Specify type of test: (sensor/collision)');
             end
@@ -875,6 +897,11 @@ classdef A2Scaffold_psuedo < handle
                 dropped = (dist <= 0.005);
             end
 
+        end
+    
+        %% Checks if any robot is in collision
+        function collision = InCollision(self)                  
+            collision = true;
         end
     end
 
@@ -931,7 +958,7 @@ classdef A2Scaffold_psuedo < handle
         %% Plots foreign object in current figure and obtains point cloud
         function points = PlotForeignObject(shape,position,colour,side1,side2,side3)
             center = position;
-            alpha = 0.5;
+            alpha = 0.7;
 
             switch shape
                 case 'sphere'
@@ -940,17 +967,19 @@ classdef A2Scaffold_psuedo < handle
                     [X, Y, Z] = sphere(30); % 30 specifies the resolution of the sphere
                 
                     % Scale and shift the sphere to the desired position and size
-                    X = radius * X + center(1);
-                    Y = radius * Y + center(2);
-                    Z = radius * Z + center(3);
+                    X = radius * X + center(1)
+                    Y = radius * Y + center(2)
+                    Z = radius * Z + center(3)
                 
                 case 'rectangle'
                     if nargin < 5
                         side2 = side1;              % only given 1 side dimension - square
+                        side3 = side2;
+                    elseif nargin < 6
+                        side3 = side2;
                     end
-                    centerpnt = position;
-                    [vertex,faces,faceNormals] = RectangularPrism(centerpnt-side1/2, centerpnt+side2/2);
-                    % need to figure out how to get point cloud
+                    
+                    [X, Y, Z] = RectangularPrism2(center,side1,side2,side3,10);
 
                 case 'ellipsoid'
                     if nargin == 6
@@ -967,7 +996,7 @@ classdef A2Scaffold_psuedo < handle
 
             % Plot object
             points = [X(:),Y(:),Z(:)];
-            surf(X, Y, Z, 'FaceAlpha', alpha, 'EdgeColor','none', 'FaceColor',colour);
+            surf(X, Y, Z, 'FaceAlpha', alpha, 'EdgeColor','none', 'FaceColor',colour, 'Tag', 'foreignObj');
         end
 
         %% Plots point cloud from matrix of points with modifiable parameters 
