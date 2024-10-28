@@ -55,10 +55,7 @@ function testing_gui_1_OpeningFcn(hObject, eventdata, handles, varargin)
 % Default command line output for testing_gui_1
 handles.output = hObject;
 
-% Update handles structure
-guidata(hObject, handles);
-
-% Initialize objects from the environment and save to handles
+% Initialise objects from the environment and save to handles
 handles.floor = Environment("floor", "floor");
 handles.table = Table();
 handles.buckets = Buckets();
@@ -67,12 +64,15 @@ handles.walls = Enclosure();
 handles.door = Door();
 handles.shoot = Shoot();
 
- % Initialize fruit plotting
+ % Initialise fruit plotting
 handles.fruit = Fruit("manual", 9);
 
 % Define the dobot handle
 handles.dobot = LinearDobotMagician();
-handles.movementActive = false;  % Initialize movement state
+handles.movementActive = false;  % Initialise movement state
+
+% Update handles structure
+guidata(hObject, handles);
 
 
 % This sets up the initial plot - only do when we are invisible
@@ -105,23 +105,14 @@ for linkIndex = 0:handles.model.n
         handles.model.faces{linkIndex+1} = faceData;
         handles.model.points{linkIndex+1} = vertexData;
 end
-
-% --- old code
-% model = SerialLink([L1 L2 L3 L4 L5 L6],'name','LinearDobotMagician');
-% 
-% for linkIndex = 0:model.n
-%     [ faceData, vertexData, plyData{linkIndex+1} ] = plyread(['LinearDobotMagicianLink',num2str(linkIndex),'.ply'],'tri'); %#ok<AGROW>        
-%     model.faces{linkIndex+1} = faceData;
-%     model.points{linkIndex+1} = vertexData;
-% end
-
+    
 % Display robot
+axes(handles.axes1);
 workspace = [-2 2 -2 2 -0.3 2];   
-handles.model.plot3d(zeros(1,model.n),'noarrow','workspace',workspace);
+handles.model.plot3d(zeros(1, handles.model.n),'noarrow','workspace',workspace);
 if isempty(findobj(get(gca,'Children'),'Type','Light'))
     camlight
 end  
-
 handles.model.delay = 0;
 
 % Try to correctly colour the arm (if colours are in ply file data)
@@ -139,12 +130,24 @@ for linkIndex = 0:handles.model.n
     end
 end
 
+robotSetUp(handles);
 guidata(hObject,handles);
 
-% data = guidata(hObject);
-% data.handles.model = model;
-% guidata(hObject,data);
 
+% --- Define the function which sets up the robot in the environment 
+function robotObjectSetUp(handles)
+handles.floor.plot([0, 0, -0.3]); 
+handles.table.plot([0.5, 0, -0.2]);
+handles.buckets.plot([0.5, 0, -0.2]);
+handles.sortedBuckets.plot([0.5, 0, -0.2]);
+handles.walls([0.5, 0, -0.2]);
+handles.door([0.5, 0, -0.2]);
+handles.shoot([0.5, 0, -0.2]);
+handles.dobot([1, 0, -0.2]);
+
+data = guidata(hObject);
+data.handles.model = model;
+guidata(hObject,data);
 
 
 % UIWAIT makes testing_gui_1 wait for user response (see UIRESUME)
