@@ -69,7 +69,28 @@ if strcmp(get(hObject,'Visible'),'off')
     plot(rand(5));
 end
 
-%plots the robot
+function testingGUI_OpeningFcn(hObject, eventdata, handles, varargin)
+    % Choose default command line output for GUI
+    handles.output = hObject;
+
+    % Initialize objects from the environment and save to handles
+    handles.floor = Environment("floor", "floor");
+    handles.table = Table();
+    handles.buckets = Buckets();
+    handles.sortedBuckets = SortedBuckets();
+    handles.walls = Enclosure();
+    handles.door = Door();
+    handles.shoot = Shoot();
+
+     % Initialize fruit plotting
+    handles.fruit = Fruit("manual", 9);
+
+    % Create robot instance
+    handles.dobot = LinearDobotMagician(); 
+    handles.movementActive = false;  % Initialize movement state
+    
+
+%plots the LinearDobotMagician 
 
 cla
 axes(handles.axes1);
