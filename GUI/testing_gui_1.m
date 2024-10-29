@@ -541,7 +541,6 @@ function slider7_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
-
 % --- Executes during object creation, after setting all properties.
 function slider7_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to slider7 (see GCBO)
@@ -811,6 +810,20 @@ function slider21_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
+% IGUS ReBeL Q1 Joint Angle
+q22 = get(hObject, 'Value'); % Obtain current slider value
+handles.q(22) = q22; % Update handle for q22
+
+%Obtain the minimum and mximum value for the sliders
+minValue = get(hObject, 'Min');
+maxValue = get(hObject, 'Max');
+
+% Change the value in the box when using slider
+set(handles.edit22, 'String', num2str(q22)); 
+
+% Update handles structure
+guidata(hObject, handles);
+
 
 % --- Executes during object creation, after setting all properties.
 function slider21_CreateFcn(hObject, eventdata, handles)
@@ -855,6 +868,20 @@ function slider22_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+% IGUS ReBeL Q2 Joint Angle
+q23 = get(hObject, 'Value'); % Obtain current slider value
+handles.q(23) = q23; % Update handle for q23
+
+%Obtain the minimum and mximum value for the sliders
+minValue = get(hObject, 'Min');
+maxValue = get(hObject, 'Max');
+
+% Change the value in the box when using slider
+set(handles.edit23, 'String', num2str(q23)); 
+
+% Update handles structure
+guidata(hObject, handles);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -901,6 +928,20 @@ function slider23_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
+% IGUS ReBeL Q3 Joint Angle
+q24 = get(hObject, 'Value'); % Obtain current slider value
+handles.q(24) = q24; % Update handle for q24
+
+%Obtain the minimum and mximum value for the sliders
+minValue = get(hObject, 'Min');
+maxValue = get(hObject, 'Max');
+
+% Change the value in the box when using slider
+set(handles.edit24, 'String', num2str(q24)); 
+
+% Update handles structure
+guidata(hObject, handles);
+
 
 % --- Executes during object creation, after setting all properties.
 function slider23_CreateFcn(hObject, eventdata, handles)
@@ -945,6 +986,20 @@ function slider24_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+% IGUS ReBeL Q4 Joint Angle
+q25 = get(hObject, 'Value'); % Obtain current slider value
+handles.q(25) = q25; % Update handle for q25
+
+%Obtain the minimum and mximum value for the sliders
+minValue = get(hObject, 'Min');
+maxValue = get(hObject, 'Max');
+
+% Change the value in the box when using slider
+set(handles.edit25, 'String', num2str(q25)); 
+
+% Update handles structure
+guidata(hObject, handles);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -991,6 +1046,20 @@ function slider25_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
+% IGUS ReBeL Q5 Joint Angle
+q26 = get(hObject, 'Value'); % Obtain current slider value
+handles.q(26) = q26; % Update handle for q26
+
+%Obtain the minimum and mximum value for the sliders
+minValue = get(hObject, 'Min');
+maxValue = get(hObject, 'Max');
+
+% Change the value in the box when using slider
+set(handles.edit26, 'String', num2str(q26)); 
+
+% Update handles structure
+guidata(hObject, handles);
+
 
 % --- Executes during object creation, after setting all properties.
 function slider25_CreateFcn(hObject, eventdata, handles)
@@ -1035,6 +1104,21 @@ function slider26_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+
+% IGUS ReBeL Q6 Joint Angle
+q27 = get(hObject, 'Value'); % Obtain current slider value
+handles.q(27) = q27; % Update handle for q27
+
+%Obtain the minimum and mximum value for the sliders
+minValue = get(hObject, 'Min');
+maxValue = get(hObject, 'Max');
+
+% Change the value in the box when using slider
+set(handles.edit27, 'String', num2str(q27)); 
+
+% Update handles structure
+guidata(hObject, handles);
 
 
 % --- Executes during object creation, after setting all properties.
