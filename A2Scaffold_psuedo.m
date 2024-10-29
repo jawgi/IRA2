@@ -81,7 +81,7 @@ classdef A2Scaffold_psuedo < handle
             self.rebelModel = rebel.model;
             hold on;
 
-            input("done loading environment?");
+            % input("done loading environment?");
 
             % self.CheckAllTaskLocations();
             % self.RunBasicMode();
@@ -94,6 +94,7 @@ classdef A2Scaffold_psuedo < handle
             self.rebelGoalsCompleted = 0;
             self.dobotStatus = 0;                           % 0 is picking up, 1 is placing down.
             self.rebelStatus = 0;
+            human = 0;
             
             %% Start of loop - continues until task is complete
             while(1)                   
@@ -102,6 +103,10 @@ classdef A2Scaffold_psuedo < handle
                     if self.stopStatus                              % E-stop engaged
                         input("Disengage e-stop?");
                         self.stopStatus = false;                % Disengage e-stop
+                        h = findobj('Tag','human');
+                        if ishandle(h)
+                            delete(h);
+                        end
                     elseif self.CheckStart()                      % System start/resume selected - HAVE TO EDIT FUNCTION FUNCTIONALITY
                             self.systemStatus = true;           % Set system to running
                             self.dobotQMatrix = self.LoadQMatrix(self.dobotModel,self.dobotFilename);       % Load qMatrix for dobot
@@ -222,11 +227,12 @@ classdef A2Scaffold_psuedo < handle
                     end
 
                     %% ASYNCHRONUS STOP/COLLISION TESTING
-                    if self.dobotGoalsCompleted == 8
+                    if self.dobotGoalsCompleted == 10
                         self.SafetyTest('collision')                          % plots foreign object within robot workspace and is added to environmentPtCl - simulating sensor/laser
-                    elseif self.dobotGoalsCompleted == 3
+                    elseif self.dobotGoalsCompleted == 3 && human == 0
                         location = [-3,3,0];
                         human = Human();                        % load random human in workspace or set location outside of it
+                        human = 1;
                         axis equal;
                     end
                 end
@@ -385,8 +391,8 @@ classdef A2Scaffold_psuedo < handle
             %% Display enclosure
             walls = Enclosure();
             door = Door();
-            % shoot = Shoot();
-            % shootCl = shoot.pointCloud;
+            shoot = Shoot();
+            shootCl = shoot.pointCloud;
             
             %% Display e-stops and sensors
             eStopDoor = EStopObject("doorstop");
@@ -397,8 +403,8 @@ classdef A2Scaffold_psuedo < handle
             camera = CameraObject();
             
             %% Get Point Cloud of all environment and plot if needed
-            % environmentCl = [tableCl; bucketsCl; sortedBucketsCl; shootCl]; %with shoot
-            environmentCl = [tableCl; bucketsCl;]; %without shoot
+            environmentCl = [tableCl; bucketsCl; shootCl]; %with shoot
+            % environmentCl = [tableCl; bucketsCl;]; %without shoot
             if pointCloudOn
                 plot3(environmentCl(:,1),environmentCl(:,2),environmentCl(:,3),'r.');
             end
@@ -458,7 +464,7 @@ classdef A2Scaffold_psuedo < handle
                                 self.allFruits.dropPoint{i} = [self.largePurpleGoalPos;self.allFruits.dropPoint{i}];
                         end
                 end
-                self.PlotPointCloud(self.allFruits.dropPoint{i},'r','.');
+                % self.PlotPointCloud(self.allFruits.dropPoint{i},'g','.');
                 
                 % input("check")
                 midPoints = self.allFruits.midPoint{i};
@@ -472,7 +478,7 @@ classdef A2Scaffold_psuedo < handle
             % optimalAzEl = [-112,14];
             view(optimalAzEl);
             zoom(1);
-            axis([ -1, 2.5, -2, 2 ,0.25,2.25]);
+            axis([ -1.5, 1.5, -2, 1.5 ,0,2.5]);
         end
     
         %% Outputs start point cloud for specified fruit at a sample size
@@ -968,8 +974,7 @@ classdef A2Scaffold_psuedo < handle
             
             for i = 1:length(allRobotPts)
                 robotPt = allRobotPts(i,:);
-                
-                for j = 1:size(self.environmentCl, 1)
+                for j = 1:100:size(self.environmentCl, 1)
 
                     environmentPt = self.environmentCl(j, :);
                     dist = self.dist2pts(environmentPt,robotPt);
@@ -1045,7 +1050,7 @@ classdef A2Scaffold_psuedo < handle
         
             points = [X(:), Y(:), Z(:)];
         
-            plot3(points(:, 1), points(:, 2), points(:, 3), 'r.');
+            % plot3(points(:, 1), points(:, 2), points(:, 3), 'b.');
 
             % input("check");
         end
