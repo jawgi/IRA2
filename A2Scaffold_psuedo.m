@@ -6,11 +6,11 @@ classdef A2Scaffold_psuedo < handle
         rebelLinkDim = [ ];
         rebelFilename = 'rebel_qMatrix';
         defaultSteps = 10;
-        defaultDeltaQ = 2;
+        defaultDeltaQ = 3;
         resetQ = [-0.1,zeros(1,6)];
         
         %% number of fruits chosen        
-        numFruits = 3;
+        numFruits = 9;
         
         %% Setting drop off points for each bucket 
         greenGoalPos = [ -0.3, -0.225, 1 ];
@@ -106,17 +106,17 @@ classdef A2Scaffold_psuedo < handle
                             self.systemStatus = true;           % Set system to running
                             self.dobotQMatrix = self.LoadQMatrix(self.dobotModel,self.dobotFilename);       % Load qMatrix for dobot
                             self.rebelQMatrix = self.LoadQMatrix(self.rebelModel,self.rebelFilename);           % Load qMatrix for rebel
-                            input("stored qMatrix for both robots?");
+                            % input("stored qMatrix for both robots?");
                     end
                 else
-                    disp("Operating robot still...");
+                    % disp("Operating robot still...");
                     
                     %% Checking if each robot has goals to complete and storing the picking and placing goals from next fruit to be picked
                     self.dobotGoalsCompleted
                     if self.dobotGoalsCompleted < self.numFruits
                         % Checking if dobot is in the state of picking or placing and calculate joint states depending on that
                         if ~self.dobotStatus % false = picking up, true = placing down
-                            fruitStartPoints = self.FruitPointCloud(self.dobotGoalsCompleted+1,100);                                                                               %Getting sample of points on surface of fruit to give better pose options
+                            fruitStartPoints = self.FruitPointCloud(self.dobotGoalsCompleted+1,10);                                                                               %Getting sample of points on surface of fruit to give better pose options
                             self.currentDobotGoal = self.CheckReachable(self.dobotModel,fruitStartPoints,false);                                                            %Finding best pose to get within maxErrorDist
                             dobotGoalReachable = self.currentDobotGoal{1};  %for debugging
                             dobotGoalQ = self.currentDobotGoal{2};
@@ -130,7 +130,7 @@ classdef A2Scaffold_psuedo < handle
                             dobotGoalTr = self.nextDobotGoal{4};
                         end
                         self.dobotQMatrix = self.CalcJointStates(self.dobotModel,dobotGoalQ,self.defaultSteps,'quintic','basic');   %basic mode - using Q pose rather than point
-                        disp("dobot joint states calculated");
+                        % disp("dobot joint states calculated");
 
                         % check collisions and store updated trajectory - maybe within calc joint states
                     end
@@ -151,18 +151,18 @@ classdef A2Scaffold_psuedo < handle
                             rebelGoalTr = self.nextRebelGoal{4};
                         end
                         self.rebelQMatrix = self.CalcJointStates(self.rebelModel,rebelGoalQ,self.defaultSteps,'quintic','basic');   %basic mode - using Q pose rather than point
-                        disp("rebel joint states calculated");
+                        % disp("rebel joint states calculated");
 
                         % check collisions and store updated trajectory - maybe within calc joint states
                     end
                     
                     %% Moving robots by number of steps in trajectory - to give opportunity for e-stop/asynchronous safety test
-                    if self.dobotGoalsCompleted > 0
+                    if self.dobotGoalsCompleted > 1
                         self.MoveRobot('rebel',self.defaultDeltaQ,self.rebelGoalsCompleted+1,self.rebelQMatrix,'advanced',self.rebelStatus);
-                        disp('rebel moved');
+                        % disp('rebel moved');
 
-                        [rebelReached,rebelDist]  = self.CheckGoalComplete(self.rebelModel,rebelGoalTr(1:3,4)');
-                        disp(['rebel goals done before check = ', num2str(self.rebelGoalsCompleted)]);
+                        [rebelReached,~]  = self.CheckGoalComplete(self.rebelModel,rebelGoalTr(1:3,4)');
+                        % disp(['rebel goals done before check = ', num2str(self.rebelGoalsCompleted)]);
                         
                         if rebelReached
                             switch self.rebelStatus
@@ -170,23 +170,24 @@ classdef A2Scaffold_psuedo < handle
                                     self.rebelGoalsCompleted = self.rebelGoalsCompleted + 1;
                                     self.rebelStatus = 0; % Now picking up
                                     self.DropFruit(self.rebelGoalsCompleted,'drop');
-                                    input('check rebel dropped');
+                                    disp(['rebel goals done = ', num2str(self.rebelGoalsCompleted)]);
+                                    % input('check rebel dropped');
                                 case 0
                                     self.rebelStatus = 1; % Now placing down
                             end
                             if self.rebelGoalsCompleted == 9
-                                reset = self.MoveRobot('rebel',self.defaultDeltaQ,self.dobotGoalsCompleted,self.resetQ,'basic',-1)
+                                reset = self.MoveRobot('rebel',self.defaultDeltaQ,self.dobotGoalsCompleted,self.resetQ,'basic',-1);
                             end
                         end
-                        disp(['rebel goals done after check = ', num2str(self.rebelGoalsCompleted)]);
+                        % disp(['rebel goals done = ', num2str(self.rebelGoalsCompleted)]);
                     end
 
                     if self.dobotGoalsCompleted ~= self.numFruits                   %Until dobot picking and placing completed
-                        moved = self.MoveRobot('dobot',self.defaultDeltaQ, self.dobotGoalsCompleted+1,self.dobotQMatrix,'advanced',self.dobotStatus)       %default mode just needs interval of steps in stored qMatrix
-                        disp('dobot moved');
+                        moved = self.MoveRobot('dobot',self.defaultDeltaQ, self.dobotGoalsCompleted+1,self.dobotQMatrix,'advanced',self.dobotStatus);       %default mode just needs interval of steps in stored qMatrix
+                        % disp('dobot moved');
 
-                        [dobotReached,dobotDist] = self.CheckGoalComplete(self.dobotModel,dobotGoalTr(1:3,4)');
-                        disp(['dobot goals done before check = ', num2str(self.dobotGoalsCompleted)]);
+                        [dobotReached,~] = self.CheckGoalComplete(self.dobotModel,dobotGoalTr(1:3,4)');
+                        % disp(['dobot goals done before check = ', num2str(self.dobotGoalsCompleted)]);
 
                         if dobotReached
                             switch self.dobotStatus
@@ -194,18 +195,17 @@ classdef A2Scaffold_psuedo < handle
                                     self.dobotGoalsCompleted = self.dobotGoalsCompleted + 1;
                                     self.dobotStatus = 0; % Now picking up
                                     self.DropFruit(self.dobotGoalsCompleted,'mid');
-                                    input('check dobot dropped');
+                                    disp(['dobot goals done = ', num2str(self.dobotGoalsCompleted)]);
+                                    % input('check dobot dropped');
                                 case 0
                                     self.dobotStatus = 1; % Now placing down
                             end
                         end
-                        disp(['dobot goals done after check = ', num2str(self.dobotGoalsCompleted)]);
+                        % disp(['dobot goals done = ', num2str(self.dobotGoalsCompleted)]);
 
                     else            %Dobot job done - go home
-                        reset = self.MoveRobot('dobot',self.defaultDeltaQ,self.dobotGoalsCompleted,self.resetQ,'basic',-1)
+                        reset = self.MoveRobot('dobot',self.defaultDeltaQ,self.dobotGoalsCompleted,self.resetQ,'basic',-1);
                     end
-                    
-                    
                     
                     %% Checking if E-stop pressed or safetyTest found unsafe to continue
                     if self.EStopPressed(false) || ~self.SafetyTest('sensor')             % Check if hardware or GUI e-stop is pressed or sensor senses object in workspace (unsafe environment)
@@ -220,16 +220,15 @@ classdef A2Scaffold_psuedo < handle
                                     && self.numFruits == self.dobotGoalsCompleted
                         self.taskComplete = true;
                     end
-                end
 
-                %% ASYNCHRONUS STOP/COLLISION TESTING
-
-                if self.dobotGoalsCompleted == 1
-                    self.SafetyTest('collision')                          % plots foreign object within robot workspace and is added to environmentPtCl - simulating sensor/laser
-                elseif self.dobotGoalsCompleted == 2
-                    location = [-3,3,0];
-                    human = Human(location);                        % load random human in workspace or set location outside of it
-                    axis equal;
+                    %% ASYNCHRONUS STOP/COLLISION TESTING
+                    if self.dobotGoalsCompleted == 8
+                        self.SafetyTest('collision')                          % plots foreign object within robot workspace and is added to environmentPtCl - simulating sensor/laser
+                    elseif self.dobotGoalsCompleted == 3
+                        location = [-3,3,0];
+                        human = Human();                        % load random human in workspace or set location outside of it
+                        axis equal;
+                    end
                 end
     
                 if self.taskComplete
@@ -251,7 +250,7 @@ classdef A2Scaffold_psuedo < handle
                 for i = 2:self.numFruits                
                     if i == 4
                         location = [-3,3,0];
-                        human = Human(location);            % replace with random time? or manual after # of fruit until demo day?
+                        human = Human();            % replace with random time? or manual after # of fruit until demo day?
                         axis equal;
                     end
 
@@ -261,12 +260,12 @@ classdef A2Scaffold_psuedo < handle
                         error("Human detected within enclosure - stopping until safe to continue...");
                     end
                     % input("check");
-
-                    disp("Testing forced simulated upcoming collision");
-                    safeToOperate = self.SafetyTest('collision')
-                    if ~safeToOperate
-                        error("System is colliding with object - stopping until safe to conitinue...");
-                    end
+                    % 
+                    % disp("Testing forced simulated upcoming collision");
+                    % safeToOperate = self.SafetyTest('collision')
+                    % if ~safeToOperate
+                    %     error("System is colliding with object - stopping until safe to conitinue...");
+                    % end
                     % input("check");
                     
                     fruitStartTr = self.allFruits.startPoint{i}.T;
@@ -278,7 +277,7 @@ classdef A2Scaffold_psuedo < handle
                     disp(['Picked up fruit ', num2str(i), ' from 1st Stage - ', num2str(dobotStage1)]);
                     % input("check");
                     
-                    fruitMidPose = self.CheckReachable(self.dobotModel,self.allFruits.midPoint{i},false)
+                    fruitMidPose = self.CheckReachable(self.dobotModel,self.allFruits.midPoint{i},false);
                     fruitMidQ = fruitMidPose{2};
 
                     dobotMidQ = self.CalcJointStates(self.dobotModel,fruitMidQ,self.steps,'quintic','basic');
@@ -402,7 +401,7 @@ classdef A2Scaffold_psuedo < handle
             environmentCl = [tableCl; bucketsCl;]; %without shoot
             if pointCloudOn
                 plot3(environmentCl(:,1),environmentCl(:,2),environmentCl(:,3),'r.');
-            end;
+            end
             self.environmentCl = environmentCl;
             
             % load fruits and store locations
@@ -465,7 +464,6 @@ classdef A2Scaffold_psuedo < handle
                 midPoints = self.allFruits.midPoint{i};
             end
 
-            
             % make view nicer - found by manually adjust figure
             set(gcf, 'Windowstyle', 'docked');
             camlight();
@@ -577,7 +575,7 @@ classdef A2Scaffold_psuedo < handle
 
                 errorDistance = minDistPose{1,1};
                 optimalQ = minDistPose{1,2};
-                if errorDistance < self.maxGoalDistError;
+                if errorDistance < self.maxGoalDistError
                     reachable = true;
                     break;                                                      % Stop for-loop and move on - we got best pose
                 end
@@ -585,7 +583,7 @@ classdef A2Scaffold_psuedo < handle
             optimalTr = robotModel.fkineUTS(optimalQ);
             reachablePoses = {reachable,optimalQ,errorDistance,optimalTr};
         end
-        
+                
         %% Creates link ellipsoids for specified robot model and returns point cloud?
         function  robotEllipsoids = CreateLinkEllipsoids(self, robotModel)      % ADD FUNCTIONALITY 
         
@@ -617,8 +615,8 @@ classdef A2Scaffold_psuedo < handle
                 [X, Y, Z] = ellipsoid(centerPoint(1), centerPoint(2), centerPoint(3), radii(1), radii(2), radii(3));
                 
                 robotModel.points{i} = [X(:), Y(:), Z(:)];
-                
                 robotModel.faces{i} = delaunay(robotModel.points{i});
+                robotEllipsoids = [X(:), Y(:), Z(:)];
             end
         end
         
@@ -653,13 +651,13 @@ classdef A2Scaffold_psuedo < handle
 
         %% Checks if goal is reached by comparing current end effector position to goal within specified buffer
         function [reached,errorDist] = CheckGoalComplete(self,robotModel,goalPos)
-            currentEndEffectorTr = robotModel.fkineUTS(robotModel.getpos())
-            errorDist = self.dist2pts(goalPos,currentEndEffectorTr(1:3,4)')
+            currentEndEffectorTr = robotModel.fkineUTS(robotModel.getpos());
+            errorDist = self.dist2pts(goalPos,currentEndEffectorTr(1:3,4)');
             if errorDist < self.maxGoalDistError
                 reached = true;
             else
                 reached = false;
-                disp(['Error distance to ',robotModel.name, ' goal is ', num2str(errorDist)]);
+                % disp(['Error distance to ',robotModel.name, ' goal is ', num2str(errorDist)]);
             end
         end
 
@@ -691,7 +689,7 @@ classdef A2Scaffold_psuedo < handle
                 otherwise
                    error("Specify method of calculating joint state: (trapezoidal/minimum jerk/RMRC)")
             end
-            finalQMatrix = qMatrix
+            finalQMatrix = qMatrix;
             % input('check join states calc')
         end
 
@@ -718,7 +716,7 @@ classdef A2Scaffold_psuedo < handle
         function moved = MoveRobot(self,robotName,deltaQ,index,qMatrix,mode,stage)                  %ugly function ew need to make more straightforward
             fruitIndex = index;
             moved = false;
-            nargin
+            % nargin
             switch robotName
                 case 'dobot'
                     if strcmp(mode,'advanced')                                                                         % Within major while loop - incremental movement while checking safety
@@ -821,7 +819,7 @@ classdef A2Scaffold_psuedo < handle
                                     % drawnow();
                                     drawnow limitrate;
                                     % pause(0.001);
-                                    disp("animated successfully");
+                                    % disp("animated successfully");
                                     moved = true;
                                     currentTr = self.rebelModel.fkineUTS(self.rebelModel.getpos());
                                     switch stage
@@ -849,7 +847,7 @@ classdef A2Scaffold_psuedo < handle
         end
    
         %% Sets up the specified safety tests for simulated sensor input (someone entering enclosure) and upcoming collision
-        function status = SafetyTest(self, type,repeat)       
+        function status = SafetyTest(self, type)       
             status = true;                          % Default to true until human sensed or colliding with foreign object
             switch type
                 case {'sensor', 'Sensor'}
@@ -912,18 +910,18 @@ classdef A2Scaffold_psuedo < handle
                 case 'mid'
                     bucketHeight = 0.10; % height stage 1 bucket
                     % fruitDropPoint = self.allFruits.midPoint{fruitIndex};
-                    fruitDropTr = self.dobotModel.fkineUTS(self.dobotModel.getpos())
+                    fruitDropTr = self.dobotModel.fkineUTS(self.dobotModel.getpos());
                     fruitDropTr(3,4) = fruitDropTr(3,4) - fruitRadius;
-                    fruitDropPoint = fruitDropTr(1:3,4)'
+                    fruitDropPoint = fruitDropTr(1:3,4)';
                     buffer = 0.05; % for this stage, robot drop point 0.05m about bucket top (for collision avoidance)
                     
                     dropHeight = fruitDropPoint(1,3) - buffer - bucketHeight + fruitRadius;
                     finalDropPoint = [fruitDropPoint(1,1),fruitDropPoint(1,2),dropHeight];
                 case 'drop'
                     bucketHeight = 0.05; % height of stage 2 buckets
-                    fruitDropTr = self.rebelModel.fkineUTS(self.rebelModel.getpos())
+                    fruitDropTr = self.rebelModel.fkineUTS(self.rebelModel.getpos());
                     fruitDropTr(3,4) = fruitDropTr(3,4) - fruitRadius;
-                    fruitDropPoint = fruitDropTr(1:3,4)'
+                    fruitDropPoint = fruitDropTr(1:3,4)';
                     dropHeight = fruitDropPoint(1,3) - bucketHeight + fruitRadius;
                     finalDropPoint = [fruitDropPoint(1,1),fruitDropPoint(1,2),dropHeight];
                 otherwise
@@ -960,9 +958,28 @@ classdef A2Scaffold_psuedo < handle
             end
         end
     
-        %% Checks if any robot is in collision %%%%%%%%%%NEED TO UPDATE TRUE OR FALSE
+        %% Checks if any robot is in collision
         function collision = InCollision(self)                  
             collision = false;
+
+            self.dobotEllipsoidPts = self.CreateLinkEllipsoids(self.dobotModel);
+            self.rebelEllipsoidPts = self.CreateLinkEllipsoids(self.rebelModel);
+            allRobotPts = [self.dobotEllipsoidPts;self.rebelEllipsoidPts];
+            
+            for i = 1:length(allRobotPts)
+                robotPt = allRobotPts(i,:);
+                
+                for j = 1:size(self.environmentCl, 1)
+
+                    environmentPt = self.environmentCl(j, :);
+                    dist = self.dist2pts(environmentPt,robotPt);
+                    
+                    if dist <= self.maxGoalDistError
+                        collision = true;       %return immediately.
+                        return;
+                    end
+                end
+            end
         end
     end
 
@@ -1045,9 +1062,9 @@ classdef A2Scaffold_psuedo < handle
                     [X, Y, Z] = sphere(30); % 30 specifies the resolution of the sphere
                 
                     % Scale and shift the sphere to the desired position and size
-                    X = radius * X + center(1)
-                    Y = radius * Y + center(2)
-                    Z = radius * Z + center(3)
+                    X = radius * X + center(1);
+                    Y = radius * Y + center(2);
+                    Z = radius * Z + center(3);
                 
                 case 'rectangle'
                     if nargin < 5
