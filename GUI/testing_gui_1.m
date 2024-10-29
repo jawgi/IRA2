@@ -245,6 +245,20 @@ function slider2_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
+% DoBot Magician Q2 Joint Angle
+q2 = get(hObject, 'Value'); % Obtain current slider value
+handles.q(2) = q2; % Update handle for q2
+
+%Obtain the minimum and mximum value for the sliders
+minValue = get(hObject, 'Min');
+maxValue = get(hObject, 'Max');
+
+% Change the value in the box when using slider
+set(handles.edit2, 'String', num2str(q2)); 
+
+% Update handles structure
+guidata(hObject, handles); 
+
 
 % --- Executes during object creation, after setting all properties.
 function slider2_CreateFcn(hObject, eventdata, handles)
@@ -256,7 +270,6 @@ function slider2_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
-
 
 
 function edit2_Callback(hObject, eventdata, handles)
@@ -289,6 +302,21 @@ function slider3_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+
+% DoBot Magician Q3 Joint Angle
+q3 = get(hObject, 'Value'); % Obtain current slider value
+handles.q(3) = q3; % Update handle for q3
+
+%Obtain the minimum and mximum value for the sliders
+minValue = get(hObject, 'Min');
+maxValue = get(hObject, 'Max');
+
+% Change the value in the box when using slider
+set(handles.edit3, 'String', num2str(q3)); 
+
+% Update handles structure
+guidata(hObject, handles);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -334,6 +362,20 @@ function slider4_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+% DoBot Magician Q4 Joint Angle
+q4 = get(hObject, 'Value'); % Obtain current slider value
+handles.q(4) = q4; % Update handle for q4
+
+%Obtain the minimum and mximum value for the sliders
+minValue = get(hObject, 'Min');
+maxValue = get(hObject, 'Max');
+
+% Change the value in the box when using slider
+set(handles.edit4, 'String', num2str(q4)); 
+
+% Update handles structure
+guidata(hObject, handles);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -381,6 +423,21 @@ function slider5_Callback(hObject, eventdata, handles)
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
 
+% DoBot Magician Q5 Joint Angle
+q5 = get(hObject, 'Value'); % Obtain current slider value
+handles.q(5) = q5; % Update handle for q5
+
+%Obtain the minimum and mximum value for the sliders
+minValue = get(hObject, 'Min');
+maxValue = get(hObject, 'Max');
+
+% Change the value in the box when using slider
+set(handles.edit5, 'String', num2str(q5)); 
+
+% Update handles structure
+guidata(hObject, handles);
+
+
 % --- Executes during object creation, after setting all properties.
 function slider5_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to slider5 (see GCBO)
@@ -426,6 +483,21 @@ function slider6_Callback(hObject, eventdata, handles)
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
 
+% DoBot Magician Q6 Joint Angle
+q6 = get(hObject, 'Value'); % Obtain current slider value
+handles.q(6) = q6; % Update handle for q6
+
+%Obtain the minimum and mximum value for the sliders
+minValue = get(hObject, 'Min');
+maxValue = get(hObject, 'Max');
+
+% Change the value in the box when using slider
+set(handles.edit6, 'String', num2str(q6)); 
+
+% Update handles structure
+guidata(hObject, handles);
+
+
 % --- Executes during object creation, after setting all properties.
 function slider6_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to slider6 (see GCBO)
@@ -436,7 +508,6 @@ function slider6_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
-
 
 
 function edit6_Callback(hObject, eventdata, handles)
