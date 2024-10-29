@@ -138,9 +138,9 @@ classdef Fruit < handle
 
         function generateStartPoses(self,qty)
             positions = [0 0 0];
-            xLimit = [-0.3 0.3];
-            yLimit = [-1.15 -0.99];
-            zLimit = [0.85 1.1];
+            xLimit = [-0.4 0.4];
+            yLimit = [-1.15 -0.9];
+            zLimit = [0.85 1.2];
             boxSize = {xLimit, yLimit, zLimit};
             minDist = max(self.radius)*2;
             for x = xLimit(1) : minDist : xLimit(2)

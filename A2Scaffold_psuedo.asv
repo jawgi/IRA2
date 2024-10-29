@@ -16,9 +16,9 @@ classdef A2Scaffold_psuedo < handle
         orangeGoalPos = [ 0, -0.225, 1 ];
         purpleGoalPos = [ 0.3, -0.225, 1 ];
         
-        smallGreenGoalPos = [ 0.3, 0.5, 1.3 ];
-        smallOrangeGoalPos = [ 0, 0.5, 1.3 ];
-        smallPurpleGoalPos = [ -0.3, 0.5, 1.3 ];
+        smallGreenGoalPos = [ 0.3, 0.46, 1.3 ];
+        smallOrangeGoalPos = [ 0, 0.46, 1.3 ];
+        smallPurpleGoalPos = [ -0.3, 0.46, 1.3 ];
 
         mediumGreenGoalPos = [ 0.3, 0.47, 1.125 ];
         mediumOrangeGoalPos = [ 0, 0.47, 1.125 ];
@@ -416,9 +416,10 @@ classdef A2Scaffold_psuedo < handle
                         self.allFruits.midPoint{i} = [self.greenGoalPos;self.allFruits.midPoint{i}];
                         switch size
                             case 's'
-                                % self.allFruits.dropPoint{i} = self.CreatePlane('Z',0.03,0.01,self.smallGreenGoalPos);
-                                 self.allFruits.dropPoint{i} = self.PlotForeignObject('rectangle',self.smallGreenGoalPos,'r',0.2,0.05,0.03,0);
-                                 self.allFruits.dropPoint{i} = [self.smallGreenGoalPos;self.allFruits.dropPoint{i}];
+                                self.allFruits.dropPoint{i} = self.CreatePlane('Z',0.03,0.01,self.smallGreenGoalPos);
+                                self.allFruits.dropPoint{i} = [self.smallGreenGoalPos;self.allFruits.dropPoint{i}];
+                                PlotForeignObject
+                                PlotForeignObject(shape,position,'b',sides(1),sides(2),sides(3),1)
                             case 'm'
                                 self.allFruits.dropPoint{i} = self.CreatePlane('Z',0.03,0.01,self.mediumGreenGoalPos);
                                 self.allFruits.dropPoint{i} = [self.mediumGreenGoalPos;self.allFruits.dropPoint{i}];
@@ -431,8 +432,7 @@ classdef A2Scaffold_psuedo < handle
                         self.allFruits.midPoint{i} = [self.orangeGoalPos;self.allFruits.midPoint{i}];
                         switch size
                             case 's'
-                                % self.allFruits.dropPoint{i} = self.CreatePlane('Z',0.03,0.01,self.smallOrangeGoalPos);
-                                self.allFruits.dropPoint{i} = self.PlotForeignObject('rectangle',self.smallOrangeGoalPos,'r',0.2,0.05,0.03,0);
+                                self.allFruits.dropPoint{i} = self.CreatePlane('Z',0.03,0.01,self.smallOrangeGoalPos);
                                 self.allFruits.dropPoint{i} = [self.smallOrangeGoalPos;self.allFruits.dropPoint{i}];
                             case 'm'
                                 self.allFruits.dropPoint{i} = self.CreatePlane('Z',0.03,0.01,self.mediumOrangeGoalPos);
@@ -446,8 +446,7 @@ classdef A2Scaffold_psuedo < handle
                         self.allFruits.midPoint{i} = [self.purpleGoalPos;self.allFruits.midPoint{i}];
                         switch size
                             case 's'
-                                % self.allFruits.dropPoint{i} = self.CreatePlane('Z',0.03,0.01,self.smallPurpleGoalPos);
-                                self.allFruits.dropPoint{i} = self.PlotForeignObject('rectangle',self.smallPurpleGoalPos,'r',0.2,0.05,0.03,0);
+                                self.allFruits.dropPoint{i} = self.CreatePlane('Z',0.03,0.01,self.smallPurpleGoalPos);
                                 self.allFruits.dropPoint{i} = [self.smallPurpleGoalPos;self.allFruits.dropPoint{i}];
                             case 'm'
                                 self.allFruits.dropPoint{i} = self.CreatePlane('Z',0.03,0.01,self.mediumPurpleGoalPos);
@@ -457,10 +456,7 @@ classdef A2Scaffold_psuedo < handle
                                 self.allFruits.dropPoint{i} = [self.largePurpleGoalPos;self.allFruits.dropPoint{i}];
                         end
                 end
-                self.PlotPointCloud(self.allFruits.dropPoint{i},'r','.');
-                
-                input("check")
-                midPoints = self.allFruits.midPoint{i};
+                points = self.allFruits.midPoint{i};
             end
 
             
@@ -1010,7 +1006,7 @@ classdef A2Scaffold_psuedo < handle
                         side3 = side2;
                     end
                     
-                    [X, Y, Z] = RectangularPrism2(center,side1,side2,side3,20);
+                    [X, Y, Z] = RectangularPrism2(center,side1,side2,side3,10);
 
                 case 'ellipsoid'
                     if nargin == 6
