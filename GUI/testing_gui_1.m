@@ -22,7 +22,7 @@ function varargout = testing_gui_1(varargin)
 
 % Edit the above text to modify the response to help testing_gui_1
 
-% Last Modified by GUIDE v2.5 29-Oct-2024 21:53:03
+% Last Modified by GUIDE v2.5 30-Oct-2024 08:49:25
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -68,7 +68,7 @@ handles.shoot = Shoot();
 handles.fruit = Fruit("manual", 9);
 
 % Define the dobot handle
-handles.dobot = LinearDobotMagician();
+handles.model = LinearDobotMagician();
 handles.movementActive = false;  % Initialise movement state
 
 % Update handles structure
@@ -1381,6 +1381,7 @@ function disengage_button_Callback(hObject, eventdata, handles)
 % hObject    handle to disengage_button (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
 handles.storedTrajectory = getCurrentTrajectoryState(); % Save the current trajectory state
 guidata(handles.figure1, handles); % Update the handle
 
@@ -1414,3 +1415,4 @@ function exit_button_CreateFcn(hObject, eventdata, handles)
 % handles    empty - handles not created until after all CreateFcns called
 
 delete(handles.figure1)
+
