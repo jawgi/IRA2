@@ -112,20 +112,20 @@ if isempty(findobj(get(gca,'Children'),'Type','Light'))
 end  
 handles.model.delay = 0;
 
-% Try to correctly colour the arm (if colours are in ply file data)
-for linkIndex = 0:handles.model.n
-    handles = findobj('Tag', handles.model.name);
-    h = get(handles,'UserData');
-    try 
-        h.link(linkIndex+1).Children.FaceVertexCData = [plyData{linkIndex+1}.vertex.red ...
-                                                      , plyData{linkIndex+1}.vertex.green ...
-                                                      , plyData{linkIndex+1}.vertex.blue]/255;
-        h.link(linkIndex+1).Children.FaceColor = 'interp';
-    catch ME_1
-        disp(ME_1);
-        continue;
-    end
-end
+% % Try to correctly colour the arm (if colours are in ply file data)
+% for linkIndex = 0:handles.model.n
+%     handles = findobj('Tag', handles.model.name);
+%     h = get(handles,'UserData');
+%     try 
+%         h.link(linkIndex+1).Children.FaceVertexCData = [plyData{linkIndex+1}.vertex.red ...
+%                                                       , plyData{linkIndex+1}.vertex.green ...
+%                                                       , plyData{linkIndex+1}.vertex.blue]/255;
+%         h.link(linkIndex+1).Children.FaceColor = 'interp';
+%     catch ME_1
+%         disp(ME_1);
+%         continue;
+%     end
+% end
 
 robotSetUp(handles);
 guidata(hObject,handles);
@@ -892,7 +892,6 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
 end
 
 
-
 function edit22_Callback(hObject, eventdata, handles)
 % hObject    handle to edit22 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -1069,7 +1068,6 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
 end
 
 
-
 function edit25_Callback(hObject, eventdata, handles)
 % hObject    handle to edit25 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -1126,7 +1124,6 @@ function slider25_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
-
 
 
 function edit26_Callback(hObject, eventdata, handles)
@@ -1268,7 +1265,6 @@ function slider10_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
-
 
 
 function edit11_Callback(hObject, eventdata, handles)
