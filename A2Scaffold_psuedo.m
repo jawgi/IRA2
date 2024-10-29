@@ -588,19 +588,38 @@ classdef A2Scaffold_psuedo < handle
         
         %% Creates link ellipsoids for specified robot model and returns point cloud?
         function  robotEllipsoids = CreateLinkEllipsoids(self, robotModel)      % ADD FUNCTIONALITY 
+        
+            linkDiameter = 0.15;
+            L = robotModel.links;
             
-            centerPoint = [0,0,0];
-            radii = [1,0.5,0.5];
-            [X,Y,Z] = ellipsoid( centerPoint(1), centerPoint(2), centerPoint(3), radii(1), radii(2), radii(3) );
-            for i = 1:4
-                robot.points{i} = [X(:),Y(:),Z(:)];
-                warning off
-                robot.faces{i} = delaunay(robot.points{i});    
-                warning on;
+            q = zeros(1, robotModel.n); 
+            tr = zeros(4, 4, robotModel.n + 1);
+            tr(:,:,1) = robotModel.base;
+            
+            for i = 1:robotModel.n
+                if i == 1 % Skipping prismatic link
+                    continue;
+                end
+                
+                % get current link
+                tr(:,:,i+1) = tr(:,:,i) * trotz(q(i-1)) * transl(0, 0, L(i).d) * transl(L(i).a, 0, 0) * trotx(L(i).alpha);
+                
+                % 
+                centerPoint = tr(1:3, 4, i+1); % Position of the end of current link
+                
+                % Finding radii
+                if L(i).d == 0 % Revolute 
+                    radii = [max(0.01, abs(L(i).a)), linkDiameter, linkDiameter]; % X-axis
+                else % Prismatic link
+                    radii = [linkDiameter, linkDiameter, max(0.01, abs(L(i).d))]; % Z-axis
+                end
+            
+                [X, Y, Z] = ellipsoid(centerPoint(1), centerPoint(2), centerPoint(3), radii(1), radii(2), radii(3));
+                
+                robotModel.points{i} = [X(:), Y(:), Z(:)];
+                
+                robotModel.faces{i} = delaunay(robotModel.points{i});
             end
-            robot.plot3d([0,0,0]);
-            axis equal
-            camlight
         end
         
         %% Checks if start/resume button has been pressed
@@ -657,7 +676,7 @@ classdef A2Scaffold_psuedo < handle
                 % robotModel.teach(newQ); % to check if it's actually near fruit
                 % input("done checking?");
             end
-            
+
             switch method
                 case 'trapezoidal'                                                          % trapezoidal velocity  - minimum time
                     s = lspb(0,1,steps);                                                    % First, create the scalar function
