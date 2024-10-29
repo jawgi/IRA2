@@ -82,8 +82,8 @@ classdef A2Scaffold_psuedo < handle
 
             input("done loading environment?");
 
-            self.CheckAllTaskLocations();
-            % self.RunBasicMode();
+            % self.CheckAllTaskLocations();
+            self.RunBasicMode();
             
             %% Initialising all variables for main loop
             self.taskComplete = false;                  
@@ -239,66 +239,63 @@ classdef A2Scaffold_psuedo < handle
         function RunBasicMode(self)
             resetQ = [-0.1,zeros(1,6)];
             while(~self.taskComplete)
-                for i = 1:self.numFruits                
-                    if i == 1
+                for i = 2:self.numFruits                
+                    if i == 4
                         location = [-3,3,0];
                         human = Human(location);            % replace with random time? or manual after # of fruit until demo day?
                         axis equal;
                     end
-                    
+
                     disp("Testing simulated sensor input - i.e. human in enclosure:");
                     safeToOperate = self.SafetyTest('sensor')
                     if ~safeToOperate
                         error("Human detected within enclosure - stopping until safe to continue...");
                     end
-                    input("check");
+                    % input("check");
 
                     disp("Testing forced simulated upcoming collision");
                     safeToOperate = self.SafetyTest('collision')
                     if ~safeToOperate
                         error("System is colliding with object - stopping until safe to conitinue...");
                     end
-                    input("check");
-
-                    % dobotStartReachable = self.CheckReachable(self.dobotModel,'start',animate);
-                    % dobotMidReachable = self.CheckReachable(self.dobotModel,'mid',animate);
-                    % rebelMidReachable = self.CheckReachable(self.rebelModel,'mid',animate);
-                    % rebelDropReachable = self.CheckReachable(self.rebelModel,'drop',animate);
-                    % 
-                    % dobotStartPoses = dobotStartReachable{1,2}
-                    % dobotMidPoses = dobotMidReachable{1,2}
-                    % rebelMidPoses = rebelMidReachable{1,2}
-                    % rebelDropPoses = rebelDropReachable{1,2}
+                    % input("check");
                     
                     fruitStartTr = self.allFruits.startPoint{i}.T;
                     fruitStartPt = fruitStartTr(1:3,4)';
-                    fruitMidPt = self.allFruits.midPoint{i};
-                    fruitDropPt = self.allFruits.dropPoint{i};
                     % input("check");
 
                     dobotStartQ = self.CalcJointStates(self.dobotModel,fruitStartPt,self.steps,'quintic','other');
-                    dobotStage1 = self.MoveRobot('dobot',1,dobotStartQ,'basic',0,i)
+                    dobotStage1 = self.MoveRobot('dobot',1,dobotStartQ,'basic',0,i);
                     disp(['Picked up fruit ', num2str(i), ' from 1st Stage - ', num2str(dobotStage1)]);
                     % dobotResetQ = self.CalcJointStates(self.dobotModel,resetQ,self.steps,'quintic','basic');
                     % self.MoveRobot('dobot',10,dobotResetQ,'basic',-1);
                     % input("check");
+                    
+                    fruitMidPose = self.CheckReachable(self.dobotModel,self.allFruits.midPoint{i},false)
+                    fruitMidQ = fruitMidPose{2};
 
-                    dobotMidQ = self.CalcJointStates(self.dobotModel,fruitMidPt,self.steps,'quintic','other');
-                    dobotStage2 = self.MoveRobot('dobot',1,dobotMidQ,'basic',1,i)
+                    dobotMidQ = self.CalcJointStates(self.dobotModel,fruitMidQ,self.steps,'quintic','basic');
+                    dobotStage2 = self.MoveRobot('dobot',1,dobotMidQ,'basic',1,i);
                     dobotDropped = self.DropFruit(i,'mid');
                     disp(['Dropped fruit ', num2str(i), ' to 2nd Stage - ',num2str(dobotDropped)]);
                     dobotResetQ = self.CalcJointStates(self.dobotModel,resetQ,self.steps,'quintic','basic');
-                    dobotReset = self.MoveRobot('dobot',5,dobotResetQ,'basic',-1,i)
+                    dobotReset = self.MoveRobot('dobot',5,dobotResetQ,'basic',-1,i);
                     % input("check");
+                    
+                    fruitMidPose = self.CheckReachable(self.rebelModel,self.allFruits.midPoint{i},false);
+                    fruitMidQ = fruitMidPose{2};
 
-                    rebelMidQ = self.CalcJointStates(self.rebelModel,fruitMidPt,self.steps,'quintic','other');
+                    rebelMidQ = self.CalcJointStates(self.rebelModel,fruitMidQ,self.steps,'quintic','basic');
                     rebelStage2 = self.MoveRobot('rebel',1,rebelMidQ,'basic',0,i);
                     disp(['Picked up fruit ', num2str(i), ' from 2nd Stage - ', num2str(rebelStage2)]);
                     % rebelResetQ = self.CalcJointStates(self.dobotModel,resetQ,self.steps,'quintic','basic');
                     % self.MoveRobot('rebel',10,rebelResetQ,'basic',-1);
                     % input("check");
 
-                    rebelDropQ = self.CalcJointStates(self.rebelModel,fruitDropPt,self.steps,'quintic','other');
+                    fruitDropPose = self.CheckReachable(self.rebelModel,self.allFruits.dropPoint{i},false);
+                    fruitDropQ = fruitDropPose{2};
+
+                    rebelDropQ = self.CalcJointStates(self.rebelModel,fruitDropQ,self.steps,'quintic','basic');
                     rebelStage3= self.MoveRobot('rebel',1,rebelDropQ,'basic',1,i);
                     rebelDropped = self.DropFruit(i,'drop');
                     disp(['Dropped fruit ', num2str(i), ' to 3rd Stage - ', num2str(rebelDropped)]);
@@ -459,7 +456,7 @@ classdef A2Scaffold_psuedo < handle
                 end
                 self.PlotPointCloud(self.allFruits.dropPoint{i},'r','.');
                 
-                input("check")
+                % input("check")
                 midPoints = self.allFruits.midPoint{i};
             end
 
@@ -517,7 +514,7 @@ classdef A2Scaffold_psuedo < handle
                     warning off
                     robotModel.animate(q0);
                     drawnow();
-                    pause(0.001);
+                    % pause(0.001);
                     warning on
                 end
                 currentQ = robotModel.getpos();
@@ -555,7 +552,7 @@ classdef A2Scaffold_psuedo < handle
                         warning off
                         robotModel.animate(q0);
                         drawnow();
-                        pause(0.001);
+                        % pause(0.001);
                         robotModel.animate(finalQ);
                         drawnow();
                         warning on
@@ -681,31 +678,21 @@ classdef A2Scaffold_psuedo < handle
 
         %% Replots specified fruit to a new point by deleting current handle and plotting again
         function [plyPlotted, nextFruitPt] = ReplotFruit(self, index,transform)
-            plyPlotted = false;
+            
             fruitIndex = index;
             nextFruitTr = transform;
-            try
-                tag = self.allFruits.tag{fruitIndex};
-                handle = findobj('Tag', tag);
-                if ~isempty(handle)
-                    delete(handle);
-                    drawnow();
-                    % input("deleted fruit?");
-                else
-                    disp(['No object found with tag ', tag]);
-                    error("exit");
-                end
-                try
-                    plyPlotted = self.allFruits.plotFruitPly(fruitIndex,'moving',nextFruitTr);
-                    nextFruitPt = nextFruitTr(1:3,4)';
-                    drawnow();
-                    % input("plotted fruit?");
-                catch
-                    error(['Could not plot new fruit location.']);
-                end
-            catch
-                error(['Could not delete fruit handle.']);
-            end
+
+            fruitHandle = self.allFruits.handle{fruitIndex};              %getting handle of fruit
+
+             if ~isempty(fruitHandle) && ishandle(fruitHandle)
+                nextFruitPt = nextFruitTr(1:3,4)';
+                plyPlotted =  self.allFruits.plotFruitPly(fruitIndex,'moving',nextFruitTr);
+                drawnow limitrate;           
+                pause(0.001);
+             else
+                plyPlotted = false;
+                disp(['No handle for fruit ', num2str(fruitIndex)]);
+             end
         end
         
         %% Moves robot for both basic and normal mode - former requires specific task stage and fruit index while latter increments semi-autonomously
@@ -720,6 +707,7 @@ classdef A2Scaffold_psuedo < handle
                         % currentFruit = allFruits.handle{fruitNum};
                         assert(deltaQ<=length(newQMatrix),'deltaQ chosen is larger than number of steps in trajectory');
                         self.dobotModel.animate(newQMatrix(1:deltaQ,:));
+                        drawnow limitrate;
                         % pause(0.001);
                         drawnow();
                     else
@@ -728,6 +716,7 @@ classdef A2Scaffold_psuedo < handle
                             for i =1:deltaQ:size(newQMatrix,1)
                                 try
                                     self.dobotModel.animate(newQMatrix(i,:));
+                                    drawnow limitrate;
                                     % disp("animated successfully");
                                     moved = true;
                                     currentTr = self.dobotModel.fkineUTS(self.dobotModel.getpos());
@@ -739,7 +728,7 @@ classdef A2Scaffold_psuedo < handle
                                             fruitTr = currentTr;
                                             % currentZ = fruitTr(3,4)
                                             radius = self.allFruits.radius(fruitIndex);
-                                            fruitTr(3,4) = fruitTr(3,4) + radius/2;
+                                            fruitTr(3,4) = fruitTr(3,4) - radius/2;
                                             % disp('modified Tr');
                                             % fruitTr
                                             [fruitPlotted,~] = self.ReplotFruit(fruitIndex,fruitTr);
@@ -747,7 +736,7 @@ classdef A2Scaffold_psuedo < handle
                                         %nothing- - only move fruit when it's been picked up
                                     end
                                     % pause(0.001);
-                                    drawnow();
+                                    
                                     % disp("drawn new joint state:")
                                 catch
                                     error("pjoint error - skipping joint state or check transform");
@@ -763,7 +752,8 @@ classdef A2Scaffold_psuedo < handle
                         % currentFruit = allFruits.handle{fruitNum};
                         assert(deltaQ<=length(newQMatrix),'deltaQ chosen is larger than number of steps in trajectory');
                         self.rebelModel.animate(newQMatrix(1:deltaQ,:));
-                        drawnow()
+                        % drawnow();
+                        drawnow limitrate;
                         % pause(0.001);
                     else
                         newQMatrix = qMatrix;
@@ -771,7 +761,10 @@ classdef A2Scaffold_psuedo < handle
                             for i = 1:deltaQ:size(newQMatrix,1)
                                 try
                                     self.rebelModel.animate(newQMatrix(i,:));
-                                    % disp("animated successfully");
+                                    % drawnow();
+                                    drawnow limitrate;
+                                    % pause(0.001);
+                                    disp("animated successfully");
                                     moved = true;
                                     currentTr = self.rebelModel.fkineUTS(self.rebelModel.getpos());
                                     switch stage
@@ -783,12 +776,10 @@ classdef A2Scaffold_psuedo < handle
                                             fruitTr(3,4) = fruitTr(3,4) - radius/2;
                                             % disp('modified Tr');
                                             % fruitTr
-                                            fruitPlotted = self.ReplotFruit(fruitIndex,fruitTr);
+                                            [fruitPlotted,~] = self.ReplotFruit(fruitIndex,fruitTr);
                                         otherwise
                                         %nothing - only move fruit when it's been picked up
-                                    end
-                                    % pause(0.001);
-                                    drawnow();
+                                    end                                    
                                 catch
                                     error("pjoint error - skipping joint state");
                                 end
@@ -864,19 +855,19 @@ classdef A2Scaffold_psuedo < handle
             fruitRadius = self.allFruits.radius(fruitIndex);
             switch stage
                 case 'mid'
-                    bucketHeight = 0.13; % height stage 1 bucket
+                    bucketHeight = 0.10; % height stage 1 bucket
                     % fruitDropPoint = self.allFruits.midPoint{fruitIndex};
                     fruitDropTr = self.dobotModel.fkineUTS(self.dobotModel.getpos())
-                    fruitDropTr(3,4) = fruitDropTr(3,4) + fruitRadius/2;
+                    fruitDropTr(3,4) = fruitDropTr(3,4) - fruitRadius;
                     fruitDropPoint = fruitDropTr(1:3,4)'
-                    buffer = 0.1; % for this stage, robot drop point 0.1m about bucket top (for collision avoidance)
+                    buffer = 0.05; % for this stage, robot drop point 0.05m about bucket top (for collision avoidance)
                     
                     dropHeight = fruitDropPoint(1,3) - buffer - bucketHeight + fruitRadius;
                     finalDropPoint = [fruitDropPoint(1,1),fruitDropPoint(1,2),dropHeight];
                 case 'drop'
                     bucketHeight = 0.05; % height of stage 2 buckets
                     fruitDropTr = self.rebelModel.fkineUTS(self.rebelModel.getpos())
-                    fruitDropTr(3,4) = fruitDropTr(3,4) - fruitRadius/2;
+                    fruitDropTr(3,4) = fruitDropTr(3,4) - fruitRadius;
                     fruitDropPoint = fruitDropTr(1:3,4)'
                     dropHeight = fruitDropPoint(1,3) - bucketHeight + fruitRadius;
                     finalDropPoint = [fruitDropPoint(1,1),fruitDropPoint(1,2),dropHeight];
@@ -899,14 +890,16 @@ classdef A2Scaffold_psuedo < handle
                 handle = findobj('Tag', self.allFruits.tag{fruitIndex});
                 currentFruitLocation = [mean(handle.XData(:)),mean(handle.YData(:)),mean(handle.ZData(:))];
                 dist = self.dist2pts(finalDropPoint,currentFruitLocation);
-                dropped = (dist <= 0.005);
+                dropped = (dist <= self.maxGoalDistError);
             end
             
+            handle = findobj('Tag', self.allFruits.tag{fruitIndex});
+            currentFruitLocation = [mean(handle.XData(:)),mean(handle.YData(:)),mean(handle.ZData(:))];
             switch stage
                 case 'mid'
-                    self.allFruits.midPoint{fruitIndex} = newFruitPt;
+                    self.allFruits.midPoint{fruitIndex} = currentFruitLocation;
                 case 'drop'
-                    self.allFruits.dropPoint{fruitIndex} = newFruitPt;
+                    self.allFruits.dropPoint{fruitIndex} = currentFruitLocation;
                 otherwise
                     disp("Invalid drop stage chosen. Fruit point not updated.");
             end

@@ -16,6 +16,7 @@ classdef Fruit < handle
         z;
         tag;
         pointCloud;
+        handle;
         % end
         %
         % properties (Access = protected)
@@ -102,29 +103,27 @@ classdef Fruit < handle
             plotted = false;
             if nargin <3
                 [faceData, vertexData] = plyread('sphere.ply', 'tri');
-                scaled = vertexData(:,1:3) * self.radius(index) * 0.1;
-                coordinates = [scaled, ones(size(scaled, 1), 1)]';
-                transformedCoordinates = (self.startPoint{index}.T * coordinates)';
+                transformedCoordinates = self.ApplyTransform(index, self.startPoint{index}.T);
                 self.pointCloud{index} = transformedCoordinates(:,1:3);
                 self.tag{index} = self.type{index}+" "+index;
                 %disp(self.colourCode{index});
-                trisurf(faceData,transformedCoordinates(:,1),transformedCoordinates(:,2),transformedCoordinates(:,3), ...
+                self.handle{index} = trisurf(faceData,transformedCoordinates(:,1),transformedCoordinates(:,2),transformedCoordinates(:,3), ...
                     'FaceColor', self.colourCode{index},'EdgeColor', 'none', 'Tag',self.tag{index});
                 plotted = true;
-            else
-                if strcmp(mode,'moving')
-                    [faceData, vertexData] = plyread('sphere.ply', 'tri');
-                    scaled = vertexData(:,1:3) * self.radius(index) * 0.1;
-                    coordinates = [scaled, ones(size(scaled, 1), 1)]';
-                    transformedCoordinates = (transform * coordinates)';
-                    self.pointCloud{index} = transformedCoordinates;
-                    self.tag{index} = self.type{index}+" "+index;
-                    %disp(self.colourCode{index});
-                    trisurf(faceData,transformedCoordinates(:,1),transformedCoordinates(:,2),transformedCoordinates(:,3), ...
-                        'FaceColor', self.colourCode{index},'EdgeColor', 'none', 'Tag',self.tag{index});
-                    plotted = true;
-                end
+            elseif strcmp(mode,'moving')
+                transformedCoordinates = self.ApplyTransform(index, transform);
+                self.pointCloud{index} = transformedCoordinates;
+                %disp(self.colourCode{index});
+                set(self.handle{index}, 'Vertices', transformedCoordinates(:, 1:3));
+                plotted = true;
             end
+        end
+
+        function transformedCoordinates = ApplyTransform(self, index, transform)
+            [faceData, vertexData] = plyread('sphere.ply', 'tri');
+            scaled = vertexData(:, 1:3) * self.radius(index) * 0.1;
+            coordinates = [scaled, ones(size(scaled, 1), 1)]';
+            transformedCoordinates = (transform * coordinates)';
         end
 
         function radii = randomSize(self,index)
