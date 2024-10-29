@@ -22,7 +22,7 @@ function varargout = testing_gui_1(varargin)
 
 % Edit the above text to modify the response to help testing_gui_1
 
-% Last Modified by GUIDE v2.5 29-Oct-2024 21:19:47
+% Last Modified by GUIDE v2.5 29-Oct-2024 21:53:03
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -90,8 +90,8 @@ function robotSetUp(hObject, handles)
 L1 = Link('d', 0.103 + 0.0362, 'a', 0, 'alpha', -pi/2, 'offset', 0, 'qlim', [deg2rad(-135), deg2rad(135)]); 
 L2 = Link('d', 0, 'a', 0.135, 'alpha', 0, 'offset', -pi/2, 'qlim', [deg2rad(5), deg2rad(80)]);
 L3 = Link('d', 0, 'a', 0.147, 'alpha', 0, 'offset', 0, 'qlim', [deg2rad(-5), deg2rad(85)]);
-L4 = Link('d', 0, 'a', 0.06, 'alpha', pi/2, 'offset', -pi/2, 'qlim', [deg2rad(-180), deg2rad(180)]);
-L5 = Link('d', -0.05, 'a', 0, 'alpha', 0, 'offset', pi, 'qlim', [deg2rad(-85), deg2rad(85)]);
+L4 = Link('d', 1, 'a', 0.06, 'alpha', pi/2, 'offset', -pi/2, 'qlim', [deg2rad(-180), deg2rad(180)]);
+L5 = Link('d', -1, 'a', 0, 'alpha', 0, 'offset', pi, 'qlim', [deg2rad(-85), deg2rad(85)]);
 L6 = Link('d', 0, 'a', 0, 'alpha', 0, 'offset', 0, 'qlim', [deg2rad(-360), deg2rad(360)]); 
 
 % SerialLink Model
@@ -132,15 +132,15 @@ guidata(hObject,handles);
 
 
 % --- Define the function which sets up the robot in the environment 
-function robotObjectSetUp(handles)
-handles.floor.plot([0, 0, -0.3]); 
-handles.table.plot([0.5, 0, -0.2]);
-handles.buckets.plot([0.5, 0, -0.2]);
-handles.sortedBuckets.plot([0.5, 0, -0.2]);
-handles.walls([0.5, 0, -0.2]);
-handles.door([0.5, 0, -0.2]);
-handles.shoot([0.5, 0, -0.2]);
-handles.dobot([1, 0, -0.2]);
+% function robotObjectSetUp(handles)
+% handles.floor.plot([0, 0, -0.3]); 
+% handles.table.plot([0.5, 0, -0.2]);
+% handles.buckets.plot([0.5, 0, -0.2]);
+% handles.sortedBuckets.plot([0.5, 0, -0.2]);
+% handles.walls([0.5, 0, -0.2]);
+% handles.door([0.5, 0, -0.2]);
+% handles.shoot([0.5, 0, -0.2]);
+% handles.dobot([1, 1, 1]);
 
 data = guidata(hObject);
 data.handles.model = model;
@@ -1330,7 +1330,6 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
 end
 
 
-
 function edit12_Callback(hObject, eventdata, handles)
 % hObject    handle to edit12 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -1380,11 +1379,34 @@ function exit_button_Callback(hObject, eventdata, handles)
 %     return;
 % end
 
-delete(handles.figure1)
-
 
 % --- Executes during object creation, after setting all properties.
 function exit_button_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to exit_button (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
+
+%% New code trialling movement to add new poses for stop and engage 
+% --- Executes on GUI startup to initialise the robot 
+function initializeRobot(handles)
+% Check if there is a saved start pose file
+if exist('startPose.mat', 'file')
+    load('startPose.mat', 'startPose');
+else
+    startPose = q0;  % Default position if no pose is put in 
+end
+
+handles.startPose = startPose;
+handles.currentPose = startPose;  % Initialise current pose
+guidata(handles.figure1, handles);
+
+% --- Executes when user modifies robot pose in GUI
+function updatePose(handles, newPose)
+
+% Store the new pose in a handle
+handles.newPose = newPose;
+
+% Update handle
+guidata(handles.figure1, handles);
+
+delete(handles.figure1)
