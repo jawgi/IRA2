@@ -112,24 +112,48 @@ if isempty(findobj(get(gca,'Children'),'Type','Light'))
 end  
 handles.model.delay = 0;
 
-% % Try to correctly colour the arm (if colours are in ply file data)
-% for linkIndex = 0:handles.model.n
-%     handles = findobj('Tag', handles.model.name);
-%     h = get(handles,'UserData');
-%     try 
-%         h.link(linkIndex+1).Children.FaceVertexCData = [plyData{linkIndex+1}.vertex.red ...
-%                                                       , plyData{linkIndex+1}.vertex.green ...
-%                                                       , plyData{linkIndex+1}.vertex.blue]/255;
-%         h.link(linkIndex+1).Children.FaceColor = 'interp';
-%     catch ME_1
-%         disp(ME_1);
-%         continue;
-%     end
-% end
+% Try to correctly colour the arm (if colours are in ply file data)
+for linkIndex = 0:handles.model.n
+    handles = findobj('Tag', handles.model.name);
+    h = get(handles,'UserData');
+    try 
+        h.link(linkIndex+1).Children.FaceVertexCData = [plyData{linkIndex+1}.vertex.red ...
+                                                      , plyData{linkIndex+1}.vertex.green ...
+                                                      , plyData{linkIndex+1}.vertex.blue]/255;
+        h.link(linkIndex+1).Children.FaceColor = 'interp';
+    catch ME_1
+        disp(ME_1);
+        continue;
+    end
+end
 
 robotSetUp(handles);
 guidata(hObject,handles);
 
+% Initialise the start pose
+if exist('startPose.mat', 'file')
+        load('startPose.mat', 'startPose');
+    else
+        startPose = zeros(1, handles.model.n);  % Default start pose = q0
+end
+
+% --- Create a function to update the positioning if there is a new pose
+function updatePose(handles, newPose)
+handles.newPose = newPose; % Store the new pose 
+guidata(handles.figure1, handles);
+
+handles.startPose = startPose;
+handles.currentPose = startPose;  % Set as current position
+guidata(hObject, handles);
+
+if isfield(handles, 'storedTrajectory') % Load saved trajectory
+    traj = handles.storedTrajectory;
+else
+    traj = generateTrajectory(handles.startPose, handles.newPose);
+end
+
+% Run the trajectory simulation
+runSimulation(traj, handles);
 
 % --- Define the function which sets up the robot in the environment 
 % function robotObjectSetUp(handles)
@@ -197,7 +221,10 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
 
-
+% --- Create a function which stores the current progress of the simulation
+% to obtain the trajerctory state for e-stop
+function currentProgress = getCurrentTrajectoryState()
+currentProgress = []; 
 
 % --- Executes on button press in estop_button.
 function estop_button_Callback(hObject, eventdata, handles)
@@ -205,14 +232,8 @@ function estop_button_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-    % Update the structure
-    guidata(hObject, handles);
-
-    % Check if there's an ongoing movement
-    if isfield(handles, 'movementActive') && handles.movementActive
-        dobot.model.delay = 0;  % Stop any delays in the animation
-        disp('Emergency stop activated. Robot movement halted.');
-    end
+currentProgress = getCurrentTrajectoryState(); % Allows simulation to be paused at the current trajectory state
+save('currentTrajectory.mat', 'currentProgress'); 
 
 
 function edit1_Callback(hObject, eventdata, handles)
@@ -1353,7 +1374,8 @@ function disengage_button_Callback(hObject, eventdata, handles)
 % hObject    handle to disengage_button (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
+handles.storedTrajectory = getCurrentTrajectoryState(); % Save the current trajectory state
+guidata(handles.figure1, handles); % Update the handle
 
 % --- Executes on button press in upload_button.
 function upload_button_Callback(hObject, eventdata, handles)
@@ -1381,28 +1403,5 @@ function exit_button_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to exit_button (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
-
-%% New code trialling movement to add new poses for stop and engage 
-% --- Executes on GUI startup to initialise the robot 
-function initializeRobot(handles)
-% Check if there is a saved start pose file
-if exist('startPose.mat', 'file')
-    load('startPose.mat', 'startPose');
-else
-    startPose = q0;  % Default position if no pose is put in 
-end
-
-handles.startPose = startPose;
-handles.currentPose = startPose;  % Initialise current pose
-guidata(handles.figure1, handles);
-
-% --- Executes when user modifies robot pose in GUI
-function updatePose(handles, newPose)
-
-% Store the new pose in a handle
-handles.newPose = newPose;
-
-% Update handle
-guidata(handles.figure1, handles);
 
 delete(handles.figure1)
