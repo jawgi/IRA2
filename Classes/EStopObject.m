@@ -20,17 +20,17 @@ classdef EStopObject < LoadObjectSTL
             end
             if location == "doorstop"
                 rotation = troty(pi/2) % 90-degree rotation around Z
-                translation = [2.08; -0.7; 1.5] % Translation vector
+                translation = [1.73; -0.7; 1.5] % Translation vector
                 T = rotation;
                 T(1:3,4) = translation;
                 self.transformation = SE3(T)
             elseif location == "robot1"
-                self.transformation = SE3(0.67,-0.58,0.81);
+                self.transformation = SE3(0.67,-0.55,0.81);
             elseif location == "robot2"
-                self.transformation = SE3(0.67,0.82,0.81);
+                self.transformation = SE3(0.67,0.15,0.81);
             elseif location == "collection"
                 rotation = trotx(-pi/2) % 90-degree rotation around Z
-                translation = [-0.75;1.34881;1.5] % Translation vector
+                translation = [-0.75;0.72;1.5] % Translation vector
                 T = rotation;
                 T(1:3,4) = translation;
                 self.transformation = SE3(T);

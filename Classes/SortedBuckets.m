@@ -6,7 +6,7 @@ classdef SortedBuckets < LoadObjectSTL
         fileName = "finalBuckets2";
         transformation = SE3(0,1.05,0);
         faceColour = [0.95,0.95,0.95];
-        edgeColour = [0.9,0.9,0.9];
+        edgeColour = '#A0A0A0';
         identifier = "finalBuckets2";
     end
 

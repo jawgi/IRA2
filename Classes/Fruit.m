@@ -105,7 +105,7 @@ classdef Fruit < handle
                 scaled = vertexData(:,1:3) * self.radius(index) * 0.1;
                 coordinates = [scaled, ones(size(scaled, 1), 1)]';
                 transformedCoordinates = (self.startPoint{index}.T * coordinates)';
-                self.pointCloud{index} = transformedCoordinates;
+                self.pointCloud{index} = transformedCoordinates(:,1:3);
                 self.tag{index} = self.type{index}+" "+index;
                 %disp(self.colourCode{index});
                 trisurf(faceData,transformedCoordinates(:,1),transformedCoordinates(:,2),transformedCoordinates(:,3), ...
@@ -138,9 +138,9 @@ classdef Fruit < handle
 
         function generateStartPoses(self,qty)
             positions = [0 0 0];
-            xLimit = [-0.55 0.55];
-            yLimit = [-1.33 -1.12];
-            zLimit = [0.85 1.2];
+            xLimit = [-0.3 0.3];
+            yLimit = [-1.15 -0.99];
+            zLimit = [0.85 1.1];
             boxSize = {xLimit, yLimit, zLimit};
             minDist = max(self.radius)*2;
             for x = xLimit(1) : minDist : xLimit(2)

@@ -6,7 +6,7 @@ classdef Buckets < LoadObjectSTL
         fileName = "buckets2";
         transformation = SE3(0,-0.15,0);
         faceColour = [0.5,0.5,0.5];
-        edgeColour = [0.55,0.55,0.55];
+        edgeColour = '#606060';
         identifier = "buckets2";
     end
 
