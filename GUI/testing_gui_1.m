@@ -91,11 +91,14 @@ L1 = Link('d', 0.103 + 0.0362, 'a', 0, 'alpha', -pi/2, 'offset', 0, 'qlim', [deg
 L2 = Link('d', 0, 'a', 0.135, 'alpha', 0, 'offset', -pi/2, 'qlim', [deg2rad(5), deg2rad(80)]);
 L3 = Link('d', 0, 'a', 0.147, 'alpha', 0, 'offset', 0, 'qlim', [deg2rad(-5), deg2rad(85)]);
 L4 = Link('d', 1, 'a', 0.06, 'alpha', pi/2, 'offset', -pi/2, 'qlim', [deg2rad(-180), deg2rad(180)]);
-L5 = Link('d', -1, 'a', 0, 'alpha', 0, 'offset', pi, 'qlim', [deg2rad(-85), deg2rad(85)]);
+L5 = Link('d', -0.05, 'a', 0, 'alpha', 0, 'offset', pi, 'qlim', [deg2rad(-85), deg2rad(85)]);
 L6 = Link('d', 0, 'a', 0, 'alpha', 0, 'offset', 0, 'qlim', [deg2rad(-360), deg2rad(360)]); 
 
 % SerialLink Model
 handles.model = SerialLink([L1 L2 L3 L4 L5 L6], 'name', 'LinearDobotMagician');
+
+% Need bring the robot up 
+handles.model.base = trotx(pi/2);
 
 for linkIndex = 0:handles.model.n
         [faceData, vertexData, plyData{linkIndex+1}] = plyread(['LinearDobotMagicianLink', num2str(linkIndex), '.ply'], 'tri'); %#ok<AGROW>        
@@ -137,6 +140,7 @@ if exist('startPose.mat', 'file')
         startPose = zeros(1, handles.model.n);  % Default start pose = q0
 end
 
+
 % --- Create a function to update the positioning if there is a new pose
 function updatePose(handles, newPose)
 handles.newPose = newPose; % Store the new pose 
@@ -150,6 +154,13 @@ if isfield(handles, 'storedTrajectory') % Load saved trajectory
     traj = handles.storedTrajectory;
 else
     traj = generateTrajectory(handles.startPose, handles.newPose);
+end
+
+% --- Create a function to run the simulation 
+function runSimulation(traj, handles)
+for i = 1:size(traj, 1)
+    handles.model.animate(traj(i, :));  % Animate
+    pause(0.05);  % Delay for visualization
 end
 
 % Run the trajectory simulation
@@ -277,6 +288,7 @@ maxValue = get(hObject, 'Max');
 % Change the value in the box when using slider
 set(handles.edit2, 'String', num2str(q2)); 
 
+
 % Update handles structure
 guidata(hObject, handles); 
 
@@ -350,7 +362,6 @@ function slider3_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
-
 
 
 function edit3_Callback(hObject, eventdata, handles)
@@ -854,7 +865,6 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
 end
 
 
-
 function edit15_Callback(hObject, eventdata, handles)
 % hObject    handle to edit15 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -1206,7 +1216,6 @@ if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColo
 end
 
 
-
 function edit27_Callback(hObject, eventdata, handles)
 % hObject    handle to edit27 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
@@ -1355,7 +1364,6 @@ function edit12_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'String') returns contents of edit12 as text
 %        str2double(get(hObject,'String')) returns contents of edit12 as a double
 
-
 % --- Executes during object creation, after setting all properties.
 function edit12_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to edit12 (see GCBO)
@@ -1367,7 +1375,6 @@ function edit12_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
-
 
 % --- Executes on button press in disengage_button.
 function disengage_button_Callback(hObject, eventdata, handles)
@@ -1390,13 +1397,15 @@ function exit_button_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% selection = questdlg(['Close ' get(handles.figure1,'Name') '?'],...
-%                      ['Close ' get(handles.figure1,'Name') '...'],...
-%                      'Yes','No','Yes');
-% if strcmp(selection,'No')
-%     return;
-% end
+selection = questdlg(['Close ' get(handles.figure1,'Name') '?'],...
+                     ['Close ' get(handles.figure1,'Name') '...'],...
+                     'Yes','No','Yes');
+if strcmp(selection,'No')
+    return;
+end
 
+% If Yes, close GUI
+close(handles.figure1);
 
 % --- Executes during object creation, after setting all properties.
 function exit_button_CreateFcn(hObject, eventdata, handles)
