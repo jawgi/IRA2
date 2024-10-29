@@ -6,7 +6,7 @@ classdef A2Scaffold_psuedo < handle
         rebelLinkDim = [ ];
         rebelFilename = 'rebel_qMatrix';
         defaultSteps = 10;
-        defaultDeltaQ = 3;
+        defaultDeltaQ = 2;
         resetQ = [-0.1,zeros(1,6)];
         
         %% number of fruits chosen        
@@ -161,7 +161,7 @@ classdef A2Scaffold_psuedo < handle
                         self.MoveRobot('rebel',self.defaultDeltaQ,self.rebelGoalsCompleted+1,self.rebelQMatrix,'advanced',self.rebelStatus);
                         disp('rebel moved');
 
-                        [rebelReached,rebelDist]  = self.CheckGoalComplete(self.rebelModel,rebelGoalTr(1:3,4));
+                        [rebelReached,rebelDist]  = self.CheckGoalComplete(self.rebelModel,rebelGoalTr(1:3,4)');
                         disp(['rebel goals done before check = ', num2str(self.rebelGoalsCompleted)]);
                         
                         if rebelReached
@@ -657,6 +657,7 @@ classdef A2Scaffold_psuedo < handle
                 % robotModel.teach(newQ); % to check if it's actually near fruit
                 % input("done checking?");
             end
+            
             switch method
                 case 'trapezoidal'                                                          % trapezoidal velocity  - minimum time
                     s = lspb(0,1,steps);                                                    % First, create the scalar function
@@ -839,13 +840,12 @@ classdef A2Scaffold_psuedo < handle
 
                     handle = findobj('Tag', 'human');
                     if ~isempty(handle)
-                        status = false;                     % Unsafe until further checking of human location
 
                         % Boundaries of enclosure
-                        minX = -1.9;
-                        maxX = 1.9;
-                        minY = -1.73;
-                        maxY = 1.22;
+                        minX = -1.46;
+                        maxX = 1.61;
+                        minY = -1.67;
+                        maxY = 0.72;
                         
                         % Get coordinates of human
                         humanLocation = [mean(handle.XData(:)),mean(handle.YData(:)), mean(handle.ZData(:))];
@@ -855,8 +855,8 @@ classdef A2Scaffold_psuedo < handle
                         % Check if they are within enclosure
                         withinEnclosure = (humanX >= minX) && (humanX <= maxX) && ...
                                                      (humanY >= minY) && (humanY <= maxY);
-                        if ~withinEnclosure
-                            status = true;                      % Human is not in enclosure - safe again
+                        if withinEnclosure
+                            status = false;                      % Human is in enclosure - not safe
                             self.stopStatus = true;
                             self.systemStatus = false;
                         end
