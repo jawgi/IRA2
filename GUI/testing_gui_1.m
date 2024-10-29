@@ -171,6 +171,20 @@ function dq1_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
+% DoBot Magician Q1 Joint Angle
+q1 = get(hObject, 'Value'); % Obtain current slider value
+handles.q(1) = q1; % Update handle for q1
+
+%Obtain the minimum and mximum value for the sliders
+minValue = get(hObject, 'Min');
+maxValue = get(hObject, 'Max');
+
+% Change the value in the box when using slider
+set(handles.edit1, 'String', num2str(q1)); 
+
+% Update handles structure
+guidata(hObject, handles); 
+
 
 % --- Executes during object creation, after setting all properties.
 function dq1_CreateFcn(hObject, eventdata, handles)
@@ -208,7 +222,6 @@ function edit1_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'String') returns contents of edit1 as text
 %        str2double(get(hObject,'String')) returns contents of edit1 as a double
-
 
 % --- Executes during object creation, after setting all properties.
 function edit1_CreateFcn(hObject, eventdata, handles)
