@@ -630,6 +630,20 @@ function slider9_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
+% DoBot Magician Cartesian Coordinates
+z1 = get(hObject, 'Value'); % Obtain current slider value
+handles.q(1) = z1; % Update handle for z1
+
+%Obtain the minimum and mximum value for the sliders
+minValue = get(hObject, 'Min');
+maxValue = get(hObject, 'Max');
+
+% Change the value in the box when using slider
+set(handles.edit10, 'String', num2str(z1)); 
+
+% Update handles structure
+guidata(hObject, handles);
+
 
 % --- Executes during object creation, after setting all properties.
 function slider9_CreateFcn(hObject, eventdata, handles)
@@ -674,6 +688,20 @@ function slider12_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+% IGUS ReBeL Cartesian Coordinates
+z2 = get(hObject, 'Value'); % Obtain current slider value
+handles.q(2) = z2; % Update handle for z2
+
+%Obtain the minimum and mximum value for the sliders
+minValue = get(hObject, 'Min');
+maxValue = get(hObject, 'Max');
+
+% Change the value in the box when using slider
+set(handles.edit13, 'String', num2str(z2)); 
+
+% Update handles structure
+guidata(hObject, handles);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -720,6 +748,20 @@ function slider13_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
+% IGUS ReBeL Cartesian Coordinates
+y2 = get(hObject, 'Value'); % Obtain current slider value
+handles.q(2) = y2; % Update handle for y2
+
+%Obtain the minimum and mximum value for the sliders
+minValue = get(hObject, 'Min');
+maxValue = get(hObject, 'Max');
+
+% Change the value in the box when using slider
+set(handles.edit14, 'String', num2str(y2)); 
+
+% Update handles structure
+guidata(hObject, handles);
+
 
 % --- Executes during object creation, after setting all properties.
 function slider13_CreateFcn(hObject, eventdata, handles)
@@ -731,7 +773,6 @@ function slider13_CreateFcn(hObject, eventdata, handles)
 if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor',[.9 .9 .9]);
 end
-
 
 
 function edit14_Callback(hObject, eventdata, handles)
@@ -764,6 +805,20 @@ function slider14_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+% IGUS ReBeL Cartesian Coordinates
+x2 = get(hObject, 'Value'); % Obtain current slider value
+handles.q(2) = x2; % Update handle for x2
+
+%Obtain the minimum and mximum value for the sliders
+minValue = get(hObject, 'Min');
+maxValue = get(hObject, 'Max');
+
+% Change the value in the box when using slider
+set(handles.edit15, 'String', num2str(x2)); 
+
+% Update handles structure
+guidata(hObject, handles);
 
 
 % --- Executes during object creation, after setting all properties.
@@ -1188,6 +1243,20 @@ function slider10_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
 
+% DoBot Magician Cartesian Coordinates
+y1 = get(hObject, 'Value'); % Obtain current slider value
+handles.q(1) = y1; % Update handle for y1
+
+%Obtain the minimum and mximum value for the sliders
+minValue = get(hObject, 'Min');
+maxValue = get(hObject, 'Max');
+
+% Change the value in the box when using slider
+set(handles.edit11, 'String', num2str(y1)); 
+
+% Update handles structure
+guidata(hObject, handles);
+
 
 % --- Executes during object creation, after setting all properties.
 function slider10_CreateFcn(hObject, eventdata, handles)
@@ -1232,6 +1301,21 @@ function slider11_Callback(hObject, eventdata, handles)
 
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
+
+
+% DoBot Magician Cartesian Coordinates
+x1 = get(hObject, 'Value'); % Obtain current slider value
+handles.q(1) = x1; % Update handle for x1
+
+%Obtain the minimum and mximum value for the sliders
+minValue = get(hObject, 'Min');
+maxValue = get(hObject, 'Max');
+
+% Change the value in the box when using slider
+set(handles.edit12, 'String', num2str(x1)); 
+
+% Update handles structure
+guidata(hObject, handles);
 
 
 % --- Executes during object creation, after setting all properties.
