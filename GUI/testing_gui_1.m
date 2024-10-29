@@ -22,7 +22,7 @@ function varargout = testing_gui_1(varargin)
 
 % Edit the above text to modify the response to help testing_gui_1
 
-% Last Modified by GUIDE v2.5 23-Oct-2024 09:25:11
+% Last Modified by GUIDE v2.5 29-Oct-2024 21:19:47
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1381,3 +1381,10 @@ function exit_button_Callback(hObject, eventdata, handles)
 % end
 
 delete(handles.figure1)
+
+
+% --- Executes during object creation, after setting all properties.
+function exit_button_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to exit_button (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
