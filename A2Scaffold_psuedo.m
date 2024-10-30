@@ -229,7 +229,7 @@ classdef A2Scaffold_psuedo < handle
                     %% ASYNCHRONUS STOP/COLLISION TESTING
                     if self.dobotGoalsCompleted == 10
                         self.SafetyTest('collision')                          % plots foreign object within robot workspace and is added to environmentPtCl - simulating sensor/laser
-                    elseif self.dobotGoalsCompleted == 3 && human == 0
+                    elseif self.dobotGoalsCompleted == 1 && human == 0
                         location = [-3,3,0];
                         human = Human();                        % load random human in workspace or set location outside of it
                         human = 1;
