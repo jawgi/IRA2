@@ -125,13 +125,13 @@ classdef A2Scaffold_psuedo < handle
                             self.currentDobotGoal = self.CheckReachable(self.dobotModel,fruitStartPoints,false);                                                            %Finding best pose to get within maxErrorDist
                             dobotGoalReachable = self.currentDobotGoal{1};  %for debugging
                             dobotGoalQ = self.currentDobotGoal{2};
-                            dobotErrorDist = self.currentDobotGoal{3};
+                            dobotErrorDist = self.currentDobotGoal{3}
                             dobotGoalTr = self.currentDobotGoal{4};
                         else
                             self.nextDobotGoal = self.CheckReachable(self.dobotModel,self.allFruits.midPoint{self.dobotGoalsCompleted+1},false);     %Using set array of midPoints associated with bucket area to find best pose
                             dobotGoalReachable = self.nextDobotGoal{1};
                             dobotGoalQ = self.nextDobotGoal{2};
-                            dobotErrorDist = self.nextDobotGoal{3};
+                            dobotErrorDist = self.nextDobotGoal{3}
                             dobotGoalTr = self.nextDobotGoal{4};
                         end
                         self.dobotQMatrix = self.CalcJointStates(self.dobotModel,dobotGoalQ,self.defaultSteps,'quintic','basic');   %basic mode - using Q pose rather than point
@@ -163,7 +163,7 @@ classdef A2Scaffold_psuedo < handle
                     
                     %% Moving robots by number of steps in trajectory - to give opportunity for e-stop/asynchronous safety test
                     if self.dobotGoalsCompleted >= self.rebelGoalsCompleted+2 || self.rebelGoalsCompleted == self.numFruits-1
-                        if dobotErrorDist < 0.05
+                        if rebelErrorDist < 0.05
                             self.MoveRobot('rebel',length(self.rebelQMatrix)-1,self.rebelGoalsCompleted+1,self.rebelQMatrix,'advanced',self.rebelStatus);
                         else
                         self.MoveRobot('rebel',self.defaultDeltaQ,self.rebelGoalsCompleted+1,self.rebelQMatrix,'advanced',self.rebelStatus);
