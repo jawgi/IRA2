@@ -5,8 +5,8 @@ classdef A2Scaffold_psuedo < handle
         dobotFilename = 'dobot_qMatrix';
         rebelLinkDim = [ ];
         rebelFilename = 'rebel_qMatrix';
-        defaultSteps = 10;
-        defaultDeltaQ = 3;
+        defaultSteps = 17;
+        defaultDeltaQ = 4;
         resetQ = [-0.1,zeros(1,6)];
         
         %% number of fruits chosen        
@@ -117,7 +117,7 @@ classdef A2Scaffold_psuedo < handle
                     % disp("Operating robot still...");
                     
                     %% Checking if each robot has goals to complete and storing the picking and placing goals from next fruit to be picked
-                    self.dobotGoalsCompleted
+                    % self.dobotGoalsCompleted
                     if self.dobotGoalsCompleted < self.numFruits
                         % Checking if dobot is in the state of picking or placing and calculate joint states depending on that
                         if ~self.dobotStatus % false = picking up, true = placing down
@@ -141,18 +141,18 @@ classdef A2Scaffold_psuedo < handle
                     end
 
                     % Same as above for rebel but only start if dobot has completed at least 1 goal
-                    if self.rebelGoalsCompleted < self.numFruits && self.dobotGoalsCompleted > 0
+                    if self.rebelGoalsCompleted < self.numFruits && self.dobotGoalsCompleted > 1
                         if ~self.rebelStatus
                             self.currentRebelGoal = self.CheckReachable(self.rebelModel,self.allFruits.midPoint{self.rebelGoalsCompleted+1},false);     %Finding best pose to pick up from stage 2
                             rebelGoalReachable = self.currentRebelGoal{1};
                             rebelGoalQ = self.currentRebelGoal{2};
-                            rebelErrorDist = self.currentRebelGoal{3};
+                            rebelErrorDist = self.currentRebelGoal{3}
                             rebelGoalTr = self.currentRebelGoal{4};
                         else
                             self.nextRebelGoal = self.CheckReachable(self.rebelModel,self.allFruits.dropPoint{self.rebelGoalsCompleted+1},false);       %Finding best pose to drop to stage 3
                             rebelGoalReachable = self.nextRebelGoal{1};
                             rebelGoalQ = self.nextRebelGoal{2};
-                            rebelErrorDist = self.nextRebelGoal{3};
+                            rebelErrorDist = self.nextRebelGoal{3}
                             rebelGoalTr = self.nextRebelGoal{4};
                         end
                         self.rebelQMatrix = self.CalcJointStates(self.rebelModel,rebelGoalQ,self.defaultSteps,'quintic','basic');   %basic mode - using Q pose rather than point
@@ -162,8 +162,12 @@ classdef A2Scaffold_psuedo < handle
                     end
                     
                     %% Moving robots by number of steps in trajectory - to give opportunity for e-stop/asynchronous safety test
-                    if self.dobotGoalsCompleted > 1
+                    if self.dobotGoalsCompleted >= self.rebelGoalsCompleted+2 || self.rebelGoalsCompleted == self.numFruits-1
+                        if dobotErrorDist < 0.05
+                            self.MoveRobot('rebel',length(self.rebelQMatrix)-1,self.rebelGoalsCompleted+1,self.rebelQMatrix,'advanced',self.rebelStatus);
+                        else
                         self.MoveRobot('rebel',self.defaultDeltaQ,self.rebelGoalsCompleted+1,self.rebelQMatrix,'advanced',self.rebelStatus);
+                        end
                         % disp('rebel moved');
 
                         [rebelReached,~]  = self.CheckGoalComplete(self.rebelModel,rebelGoalTr(1:3,4)');
@@ -188,7 +192,11 @@ classdef A2Scaffold_psuedo < handle
                     end
 
                     if self.dobotGoalsCompleted ~= self.numFruits                   %Until dobot picking and placing completed
-                        moved = self.MoveRobot('dobot',self.defaultDeltaQ, self.dobotGoalsCompleted+1,self.dobotQMatrix,'advanced',self.dobotStatus);       %default mode just needs interval of steps in stored qMatrix
+                        if dobotErrorDist < 0.05
+                            self.MoveRobot('dobot',length(self.dobotQMatrix)-1,self.dobotGoalsCompleted+1,self.dobotQMatrix,'advanced',self.dobotStatus);
+                        else
+                            moved = self.MoveRobot('dobot',self.defaultDeltaQ, self.dobotGoalsCompleted+1,self.dobotQMatrix,'advanced',self.dobotStatus);       %default mode just needs interval of steps in stored qMatrix
+                        end
                         % disp('dobot moved');
 
                         [dobotReached,~] = self.CheckGoalComplete(self.dobotModel,dobotGoalTr(1:3,4)');
@@ -229,7 +237,7 @@ classdef A2Scaffold_psuedo < handle
                     %% ASYNCHRONUS STOP/COLLISION TESTING
                     if self.dobotGoalsCompleted == 10
                         self.SafetyTest('collision')                          % plots foreign object within robot workspace and is added to environmentPtCl - simulating sensor/laser
-                    elseif self.dobotGoalsCompleted == 1 && human == 0
+                    elseif self.dobotGoalsCompleted == 10 && human == 0
                         location = [-3,3,0];
                         human = Human();                        % load random human in workspace or set location outside of it
                         human = 1;
