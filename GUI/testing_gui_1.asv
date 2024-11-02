@@ -22,7 +22,7 @@ function varargout = testing_gui_1(varargin)
 
 % Edit the above text to modify the response to help testing_gui_1
 
-% Last Modified by GUIDE v2.5 02-Nov-2024 16:38:36
+% Last Modified by GUIDE v2.5 29-Oct-2024 21:53:03
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -69,7 +69,6 @@ handles.fruit = Fruit("manual", 9);
 
 % Define the dobot handle
 % handles.dobot = LinearDobotMagician();
-handles.movementActive = false;  % Initialise movement state
 
 dobotBase = SE3(0.4,-0.625,0.8).T;
 handles.dobot = LinearUR3e(dobotBase);
@@ -79,13 +78,13 @@ hold on;
 rebelBase = SE3(0.4,0.2,0.8).T;
 handles.rebel = LinearUR3e(rebelBase);
 rebelModel = handles.rebel.model;
-
+set(gcf, 'Windowstyle', 'docked');
 camlight();
-optimalAzEl = [-93,17];
+optimalAzEl = [-104,22];
 view(optimalAzEl);
-zoom(2);
-axis([ -1.5, 1.5, -2, 1.5 ,0,2.5]);
-
+zoom(1);
+            axis([ -1.5, 1.5, -2, 1.5 ,0,2.5]);
+handles.movementActive = false;  % Initialise movement state
 
 % Update handles structure
 guidata(hObject, handles);
@@ -1399,9 +1398,9 @@ function disengage_button_Callback(hObject, eventdata, handles)
 handles.storedTrajectory = getCurrentTrajectoryState(); % Save the current trajectory state
 guidata(handles.figure1, handles); % Update the handle
 
-% --- Executes on button press in resume_button.
-function resume_button_Callback(hObject, eventdata, handles)
-% hObject    handle to resume_button (see GCBO)
+% --- Executes on button press in upload_button.
+function upload_button_Callback(hObject, eventdata, handles)
+% hObject    handle to upload_button (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
