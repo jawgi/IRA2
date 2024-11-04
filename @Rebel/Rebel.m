@@ -36,12 +36,13 @@ classdef Rebel < ModifiedRobotBaseClass
 
         %% CreateModel
         function CreateModel(self)
-            link(1) = Link('d',0,'a', 0, 'alpha', -pi/2,'qlim',deg2rad([-360,360])); % PRISMATIC Link
-            link(2) = Link('d', 0, 'a', 0, 'alpha', 0,'qlim',deg2rad([-360,360]));
-            link(3) = Link('d', 0.15827 , 'a', 0.000575, 'alpha', 0,'qlim',deg2rad([-360,360]));
-            link(4) = Link('d', 0.133458, 'a', 0.021561, 'alpha', 0,'qlim',deg2rad([-360,360]));
-            link(5) = Link('d', 0, 'a', 0, 'alpha', 0,'qlim',deg2rad([-360,360]));
-            link(6) = Link('d', 0, 'a', 0, 'alpha', 0,'qlim',deg2rad([-360,360]));
+            link(1) = Link('theta',0,'a', 0, 'alpha', -pi/2,'qlim',deg2rad([-360,360])); % PRISMATIC Link
+            link(2) = Link('d', 0.5306, 'a', 0, 'alpha', 0,'qlim',deg2rad([-360,360])); % 0.294219
+            link(3) = Link('d', 0.0235,'a',0.43, 'alpha',0,'qlim',deg2rad([-360, 360]));
+            % link(3) = Link('d', 0.022487 , 'a', -0.052532, 'alpha',0,'qlim',deg2rad([-130,90]));
+            link(4) = Link('d', -0.05, 'a', 0, 'alpha', 0,'qlim',deg2rad([-360,360]));
+            %link(5) = Link('d', 0, 'a', 0.1, 'alpha',-pi/2,'qlim',deg2rad([-360,360]));
+            % link(6) = Link('d', 0, 'a', 0, 'alpha', 0,'qlim',deg2rad([-360,360]));
             % link(7) = Link('d', 0, 'a', 0, 'alpha', 0,'qlim',deg2rad([-360,360]));
             % link(8) = Link('d', 0, 'a', 0, 'alpha', 0,'qlim',deg2rad([-360,360]));
             self.model = SerialLink(link,'name',self.name);
