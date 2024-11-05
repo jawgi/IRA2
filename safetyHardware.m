@@ -28,9 +28,9 @@ doorOpen = 0;
 terminate = 0;
 
 % Create a timer to check serial communication
-tArd = timer('ExecutionMode', 'fixedRate', 'Period', 0.05, ...
-    'TimerFcn', @(~,~) checkSerial(arduino));
-
+% tArd = timer('ExecutionMode', 'fixedRate', 'Period', 0.05, ...
+%     'TimerFcn', @(~,~) checkSerial(arduino));
+% 
 tCont = timer('ExecutionMode', 'fixedRate', 'Period', 0.05, ...
     'TimerFcn', @(~,~) checkController(joy));
 
@@ -49,64 +49,6 @@ while(1)
     
     pause(1);
 end
-    
-function checkSerial(serialObj)
-    %global estop; % Declare global variable
-
-    if serialObj.BytesAvailable > 0
-        data = fgets(serialObj); % Read data from Arduino
-        data = strtrim(data); % Remove whitespace
-
-        % Display received signal
-        disp(['Received: ', data]);
-
-        % Conditional behavior based on the received message
-        switch data
-            case 'e1 triggered'
-                disp('Emergency stop at door has been engaged.');
-                estopDoor = 1; % Set E-stop
-            case 'e1 released'
-                disp('Emergency stop  at door has been released.');
-                estopDoor = 0; % Set E-stop
-            case 'e2 triggered'
-                disp('Emergency stop at robot 1 has been engaged.');
-                estopRobot1 = 1; % Set E-stop
-            case 'e2 released'
-                disp('Emergency stop  at robot 1 has been released.');
-                estopRobot1 = 0; % Set E-stop
-            case 'e3 triggered'
-                disp('Emergency stop at robot 2 has been engaged.');
-                estopRobot2 = 1; % Set E-stop
-            case 'e3 released'
-                disp('Emergency stop  at robot 2 has been released.');
-                estopRobot2 = 0; % Set E-stop
-            case 'e4 triggered'
-                disp('Emergency stop at collection point has been engaged.');
-                estopCollection = 1; % Set E-stop
-            case 'e4 released'
-                disp('Emergency stop at collection point has been released.');
-                estopCollection = 0; % Set E-stop
-            case 'door open sensor triggered'
-                disp('Door has been opened.');
-                doorOpen = 1; % Set E-stop
-            case 'door open sensor released'
-                disp('Door has been closed.');
-                doorOpen = 0; % Set E-stop
-        end
-
-        estopVal = estopDoor + estopRobot1 + estopRobot2 + estopCollection + doorOpen;
-        
-        % If any estops are triggered, wait until reset to resume
-        if estopVal > 0
-            estop = 1;
-        else
-            estop = 0;
-        end
-
-        disp(["Estop value : ", estop]); % Display current E-stop value
-    end
-end
-
 
 function checkController(joy)
 global estop; % overall status for if any estops are triggered
@@ -179,3 +121,61 @@ home = buttons(14);
     %disp(["Estop value : ", estop]); % Display current E-stop value
 
 end
+
+% 
+% function checkSerial(serialObj)
+%     %global estop; % Declare global variable
+% 
+%     if serialObj.BytesAvailable > 0
+%         data = fgets(serialObj); % Read data from Arduino
+%         data = strtrim(data); % Remove whitespace
+% 
+%         % Display received signal
+%         disp(['Received: ', data]);
+% 
+%         % Conditional behavior based on the received message
+%         switch data
+%             case 'e1 triggered'
+%                 disp('Emergency stop at door has been engaged.');
+%                 estopDoor = 1; % Set E-stop
+%             case 'e1 released'
+%                 disp('Emergency stop  at door has been released.');
+%                 estopDoor = 0; % Set E-stop
+%             case 'e2 triggered'
+%                 disp('Emergency stop at robot 1 has been engaged.');
+%                 estopRobot1 = 1; % Set E-stop
+%             case 'e2 released'
+%                 disp('Emergency stop  at robot 1 has been released.');
+%                 estopRobot1 = 0; % Set E-stop
+%             case 'e3 triggered'
+%                 disp('Emergency stop at robot 2 has been engaged.');
+%                 estopRobot2 = 1; % Set E-stop
+%             case 'e3 released'
+%                 disp('Emergency stop  at robot 2 has been released.');
+%                 estopRobot2 = 0; % Set E-stop
+%             case 'e4 triggered'
+%                 disp('Emergency stop at collection point has been engaged.');
+%                 estopCollection = 1; % Set E-stop
+%             case 'e4 released'
+%                 disp('Emergency stop at collection point has been released.');
+%                 estopCollection = 0; % Set E-stop
+%             case 'door open sensor triggered'
+%                 disp('Door has been opened.');
+%                 doorOpen = 1; % Set E-stop
+%             case 'door open sensor released'
+%                 disp('Door has been closed.');
+%                 doorOpen = 0; % Set E-stop
+%         end
+% 
+%         estopVal = estopDoor + estopRobot1 + estopRobot2 + estopCollection + doorOpen;
+% 
+%         % If any estops are triggered, wait until reset to resume
+%         if estopVal > 0
+%             estop = 1;
+%         else
+%             estop = 0;
+%         end
+% 
+%         disp(["Estop value : ", estop]); % Display current E-stop value
+%     end
+% end

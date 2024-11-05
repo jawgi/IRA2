@@ -13,11 +13,20 @@ classdef Kinect < handle
 
     methods
 
-        function self = Kinect()
+        function self = Kinect(precalibrated)
             self.rgbVid = videoinput('kinect', 1); % RGB camera
             self.depthVid = videoinput('kinect', 2); % Depth camera+
             self.rgbImage = getsnapshot(self.rgbVid);
             self.depthImage = getsnapshot(self.depthVid);
+            if nargin < 1 || precalibrated == 0
+                self.calibrated = 0;
+                disp("Please complete the camera calibration.");
+            else
+                self.calibrated = 1;
+                disp("Camera will be calibrated with data from a previous calibration");
+                self.performCalibration();
+                self.getPrecalibratedData();
+            end
         end
 
         function takeCalibrationImages(self)
@@ -131,7 +140,7 @@ classdef Kinect < handle
             disp('Camera has been calibrated. All images have been processed and moved to the subfolder.');
         end
 
-        function alignRGBDepth()
+        function alignRGBDepth(self)
             % Ensure images are of the same size
             if size(self.rgbImage, 1) ~= size(self.depthImage, 1) || size(self.rgbImage, 2) ~= size(self.depthImage, 2)
                 error('RGB and depth images must be of the same dimensions.');
@@ -188,7 +197,7 @@ classdef Kinect < handle
                 disp('No images found in the specified folder.');
                 return;
             end
-            numImages = 2;
+            numImages = length(imageFiles); %using predefined date
             squareSize = 41; % Size of a square in mm
             imagePoints = cell(1, numImages);
             worldPoints3D = [];
@@ -229,6 +238,7 @@ classdef Kinect < handle
             % delete(rgbVid);
             % delete(depthVid);
             disp('RGB Camera calibration completed.');
+            % disp(self.cameraParams);
         end
 
         function calibrateDepth(self)
@@ -263,7 +273,66 @@ classdef Kinect < handle
                 self.worldPoints3D(i, :) = [x, y, z];
             end
 
+            self.calibrated = 1;
+            % Assign the property to a temporary variable
+            worldPoints3D = self.worldPoints3D;
+
+            filePath = fullfile("Camera", 'depthCalibration.mat');
+            
+            % Save the temporary variable
+            save(filePath, 'worldPoints3D');
+            self.alignRGBDepth();
+
             disp('Depth calibration completed.');
         end
+
+        function getPrecalibratedData(self)
+            filePath = fullfile("Camera", 'depthCalibration.mat');
+            data = load(filePath, 'worldPoints3D');
+            fileInfo = dir(filePath);
+            lastModified =  dateshift(datetime(fileInfo.date), 'start', 'day'); 
+            today = dateshift(datetime("now"), 'start', 'day');
+    
+            if isempty(fieldnames(data)) 
+                disp("No calibration data saved, please calibrate the camera.");
+            elseif lastModified ~= today
+                disp("Calibration data outdated, please recalibrate the camera.");
+            else
+                self.worldPoints3D = data.worldPoints3D;
+                self.calibrated = 1;
+                self.alignRGBDepth();
+                disp("Successfully obtained precalibrated camera information.");
+            end
+        end
+
+        function depth = getPixelDepth(self,x,y)
+            % depth = zeros(1,2); %depth away from camera & z position?
+            x = round(x);
+            y = round(y);
+            depth = 0;
+            if x < 1 || x > size(self.calibratedImage, 2) || y < 1 || y > size(self.calibratedImage, 1)
+                error('Pixel coordinates are out of bounds.');
+            else
+                 depth = double(self.depthImage(y, x)) / 1000;
+            end
+        end
+
+        function coords = getRelativePosition(self,x,y,depth)
+            tableHeight = 0.8;
+            cameraHeight = 2.4;
+            coords = zeros(1,3);
+            [height, width, ~] = size(self.rgbImage);
+    
+            % Calculate the middle pixel coordinates
+            cameraX = round(width / 2) / 1000;
+            cameraY = round(height / 2) / 1000;
+            referenceX = x / 1000;
+            referenceY = y / 1000;
+
+            coords(1) = cameraX - referenceX;
+            coords(2) = cameraY - referenceY;
+            coords(3) = cameraHeight - depth
+        end
+            
     end
 end
