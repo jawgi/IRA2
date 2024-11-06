@@ -16,13 +16,10 @@ classdef Fruit < handle
         z;
         tag;
         pointCloud;
-<<<<<<< HEAD
-=======
         handle;
         % end
         %
         % properties (Access = protected)
->>>>>>> ca2a970044c1e26910cd9943bf03d1ff4f83e436
         types = ["Greengage","Apricot","Plum"];
         colourNames = ["Green","Orange","Purple"];
         green = [0 0.5 0];
