@@ -1,4 +1,4 @@
-classdef A2Scaffold_psuedo < handle
+classdef A2Scaffold_psuedo_DEBUGGING < handle
     properties (Constant)
 
         dobotLinkDim = [ ];
