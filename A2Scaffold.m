@@ -8,7 +8,7 @@ classdef A2Scaffold < handle
         resetQ = [-0.1,zeros(1,6)];
         
         %% number of fruits chosen        
-        numFruits = 9;
+        numFruits = 50;
         
         %% Setting drop off points for each bucket 
         greenGoalPos = [ -0.3, -0.225, 1 ];
@@ -59,7 +59,7 @@ classdef A2Scaffold < handle
     end
     
     methods
-        function self = A2Scaffold_psuedo() 
+        function self = A2Scaffold() 
             tic;
             %% Simulating the environment with robot models and initialising variables
             self.SimulateEnvironment(false);        
@@ -209,9 +209,9 @@ classdef A2Scaffold < handle
                     end
 
                     %% ASYNCHRONUS STOP/COLLISION TESTING
-                    if self.dobotGoalsCompleted == 10
+                    if self.dobotGoalsCompleted == -1
                         self.SafetyTest('collision')                          % plots foreign object within robot workspace and is added to environmentPtCl - simulating sensor/laser
-                    elseif self.dobotGoalsCompleted == 10 && human == 0
+                    elseif self.dobotGoalsCompleted == 5 && human == 0
                         % location = [-3,3,0];
                         Human();                                                    % load random human in workspace or set location outside of it
                         % Human(location);
@@ -632,9 +632,9 @@ classdef A2Scaffold < handle
                         newQMatrix = self.dobotQMatrix;
                         assert(deltaQ<=length(newQMatrix),'deltaQ chosen is larger than number of steps in trajectory');
                         self.dobotModel.animate(newQMatrix(1:deltaQ,:));
-                        % drawnow();
-                        drawnow limitrate;          %superspeed
-                        % pause(0.001);
+                        drawnow();
+                        pause(0.1);
+                        % drawnow limitrate;          %superspeed
                         moved = true;
                         currentTr = self.dobotModel.fkineUTS(self.dobotModel.getpos());         % Get current end effector transform
                        if stage == 1        %fruit moving too
@@ -649,7 +649,9 @@ classdef A2Scaffold < handle
                             for i =1:deltaQ:size(newQMatrix,1)
                                 try
                                     self.dobotModel.animate(newQMatrix(i,:));
-                                    drawnow limitrate;
+                                    drawnow();
+                                    pause(0.1);
+                                    % drawnow limitrate;
                                     moved = true;
                                     currentTr = self.dobotModel.fkineUTS(self.dobotModel.getpos());
                                     if stage == 1        %fruit moving too            
@@ -658,7 +660,6 @@ classdef A2Scaffold < handle
                                         fruitTr(3,4) = fruitTr(3,4) - radius/2;
                                         [~,~] = self.ReplotFruit(fruitIndex,fruitTr);
                                     end
-                                    % pause(0.001);
                                 catch
                                     error("pjoint error - skipping joint state or check transform");
                                 end
@@ -671,9 +672,9 @@ classdef A2Scaffold < handle
                         newQMatrix = self.rebelQMatrix;
                         assert(deltaQ<=length(newQMatrix),'deltaQ chosen is larger than number of steps in trajectory');
                         self.rebelModel.animate(newQMatrix(1:deltaQ,:));
-                        % drawnow();
-                        drawnow limitrate;
-                        % pause(0.001);
+                        drawnow();
+                        pause(0.1);
+                        % drawnow limitrate;
                         moved = true;
 
                         currentTr = self.rebelModel.fkineUTS(self.rebelModel.getpos());
@@ -690,9 +691,9 @@ classdef A2Scaffold < handle
                             for i = 1:deltaQ:size(newQMatrix,1)
                                 try
                                     self.rebelModel.animate(newQMatrix(i,:));
-                                    % drawnow();
-                                    drawnow limitrate;
-                                    % pause(0.001);
+                                    drawnow();
+                                    pause(0.1);
+                                    % drawnow limitrate;
                                     moved = true;
                                     currentTr = self.rebelModel.fkineUTS(self.rebelModel.getpos());
 
